@@ -81,4 +81,10 @@
     .Parent = RSFreya
   @Core.LiteLib.Parent = RSCore
   @Core.BaseLib.Parent = RSCore
-  @Core.FreyaStudio.Parent = SSCore
+  @Core.FreyaStudio.Parent = SSFreya
+  with @Core.MainServer
+    .Name = "Main"
+    .Parent = SSFreya
+  with @Core.MainClient
+    .Name = "Main"
+    .Parent = RSFreya
