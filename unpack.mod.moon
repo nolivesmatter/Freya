@@ -88,3 +88,6 @@
   with @Core.MainClient
     .Name = "Main"
     .Parent = RSFreya
+  with Instance.new "Folder"
+    .Name = "Intents"
+    .Parent = RSFreya
