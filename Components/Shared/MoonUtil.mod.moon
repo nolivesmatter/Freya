@@ -1,7 +1,7 @@
 -- Moonscript utility
 local ^
 ExtractWrapper = (o) ->
-	(f) -> (...) ->
+	(f) -> (...) -> -- Currying
 		return f select 2, ... if ... == o else f ...
 
 r = newproxy true
