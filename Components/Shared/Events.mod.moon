@@ -10,6 +10,7 @@ Event = {}
 Events = setmetatable {}, {__mode = 'k'}
 Hold = setmetatable {}, {__mode = 'k'}
 Intercept = setmetatable {}, {__mode = 'k'}
+Disconnections = setmetatable {}, {__mode = 'k'}
 
 ni = newproxy true
 
@@ -46,6 +47,17 @@ local eClass = {
 eClass.Fire = eClass.fire;
 eClass.Intercept = eClass.intercept;
 
+dClass = {
+  disconnect = =>
+    if Disconnections[@]
+      Disconnections[@]!
+      Disconnections[@] = nil
+    else
+      error "Attempt to disconnect dead connection or invalid connection", 2
+  connected = => not not Disconnections[@]
+}
+dClass.Connected = dClass.connected
+
 Event.new = ->
   eni = newproxy true
   with getmetatable eni
@@ -57,6 +69,15 @@ Event.new = ->
 
 Event.Intent = (...) ->
   IntentName = extract ...
+
+Event.Connection = (...) ->
+  f = extract ...
+  eni = newproxy true
+  with getmetatable eni
+    .__index = dClass
+    .__metatable = "Locked Metatable: Freya Connection"
+  Disconnections[eni] = f
+  return eni
 
 with getmetatable ni
   .__index = Event
