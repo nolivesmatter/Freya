@@ -88,6 +88,6 @@
   with @Core.MainClient
     .Name = "Main"
     .Parent = RSFreya
-  with Instance.new "Folder"
-    .Name = "Intents"
+  with Instance.new "RemoteEvent"
+    .Name = "Intent"
     .Parent = RSFreya
