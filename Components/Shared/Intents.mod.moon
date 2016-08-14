@@ -115,6 +115,8 @@ with ni
     Events = _G.Freya:GetComponent "Events"
     Intent = Events.new!
     Intent\Intercept (name, ...) -> IIntercept[name] and IIntercept[name] ...
+    cxitio.Intent = Intent
+    cxitio.RIntent = RIntent
     .__index = cxitio
     cxitio[k]
   .__tostring = -> "Freya Intents component"
