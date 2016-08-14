@@ -68,7 +68,9 @@ cxitio.Tell = (...) ->
 cxitio.Intercept = (...) ->
   -- Local intercept (Outgoing)
   name, f = extract ...
+  o = OIntercept[name]
   OIntercept[name] = f
+  return o
 cxitio.Tap = cxitio.Intercept
 
 cxitio.Listen = (...) ->
@@ -86,7 +88,9 @@ cxitio.wait = cxitio.Listen
 cxitio.Hold = (...) ->
   -- Local intercept (Incoming)
   name, f = extract ...
+  o = IIntercept[name]
   IIntercept[name] = f
+  return o
 cxitio.Filter = cxitio.Hold
 
 cxitio.SubscribeLocal = (...) ->
