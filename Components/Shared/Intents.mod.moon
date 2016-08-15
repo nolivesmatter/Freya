@@ -6,7 +6,7 @@
 --// | outgoing intents.
 --//
 
-RIntent = game.ReplicatedStorage.Freya.Intent
+RIntent = game.ReplicatedStorage\WaitForChild("Freya")\WaitForChild("Intent")
 local Intent
 
 local Events
