@@ -7,16 +7,16 @@ Hybrid = (f) -> (...) ->
   return f select 2, ... if ... == ni else f ...
 
 Controller = 
-  Install = Hybrid (Package, Version) ->
+  Install: Hybrid (Package, Version) ->
     -- Install a package.
     return nil
-  Update = ->
+  Update: ->
     -- Update Freya
     return nil
-  GetPackages = ->
+  GetPackages: ->
     -- Get the current packages list 
     return nil
-  Load = Hybrid (UtilPackage) ->
+  Load: Hybrid (UtilPackage) ->
     -- Load something from Util
     return nil
 
