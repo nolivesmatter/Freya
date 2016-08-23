@@ -122,7 +122,7 @@ Clear = (Location, Name) ->
   with @Core.MainClient
     .Name = "Main"
     .Parent = RSFreya
-  Clear RSFreya "Intent"
+  Clear RSFreya, "Intent"
   print "[Freya] Creating Freya Intent RemoteEvent"
   with Instance.new "RemoteEvent"
     .Name = "Intent"
