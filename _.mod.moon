@@ -16,6 +16,17 @@ HttpService = with game\GetService("HttpService")
   POST = \PostAsync
   JSONEncode = \JSONEncode
   JSONDecode = \JSONDecode
+  
+if not script\FindFirstChild "Version"
+  with Instance.new "StringValue"
+    .Name = "Version"
+    .Value = "aaaaa"
+    .Parent = script
+if not script\FindFirstChild "PackageList"
+  with Instance.new "ModuleScript"
+    .Name = "PackageList"
+    .Source = "--[==[{}]==]"
+    .Parent = script
 
 Freya = game.ServerStorage\FindFirstChild "Freya"
 if Freya
@@ -26,7 +37,7 @@ if Freya
     print "[Freya] Updating Freya to " .. script.Version.Value
     script.PackageList\Destroy!
     Freya.PackageList.Parent = script
-    Packages = script.PackageList.Source:sub(5,-3):gsub('^%s+',''):gsub('%s+$','');
+    Packages = script.PackageList.Source:sub(7,-5):gsub('^%s+',''):gsub('%s+$','');
     require script.unpack script
     -- Reinstall packages
     FreyaStudio = require Freya.FreyaStudio
