@@ -6,6 +6,7 @@
 --//
 
 local ^
+local FreyaStudio, IsStudio, HttpEnabled, FreyaStudio
 
 HttpService = with game\GetService "HttpService"
   HttpEnabled = .HttpEnabled
