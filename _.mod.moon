@@ -35,7 +35,7 @@ if Freya
     script.PackageList\Destroy!
     Freya.PackageList.Parent = script
     Packages = script.PackageList.Source\sub(7,-5)\gsub('^%s+','')\gsub('%s+$','')
-    require script.unpack script
+    require(script.unpack) script
     -- Reinstall packages
     FreyaStudio = require Freya.FreyaStudio
     Packages = JSONDecode Packages
@@ -47,6 +47,6 @@ else
   -- Install Freya!
   FreyaStudio = script.Core.FreyaStudio
   print "[Freya] Installing Freya " .. script.Version.Value
-  require script.unpack script
+  require(script.unpack) script
 
 return require FreyaStudio
