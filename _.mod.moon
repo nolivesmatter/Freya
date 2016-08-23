@@ -9,8 +9,7 @@ local ^
 local FreyaStudio, IsStudio, HttpEnabled, FreyaStudio
 
 HttpService = with game\GetService "HttpService"
-  HttpEnabled = .HttpEnabled
-  IsStudio = pcall -> .HttpEnabled = not HttpEnabled
+  IsStudio = pcall -> HttpEnabled = .HttpEnabled
   return error "The Freya MainModule must be required from the Studio command bar" unless IsStudio
   .HttpEnabled = true
 JSONDecode = HttpService\JSONDecode
@@ -18,12 +17,12 @@ JSONDecode = HttpService\JSONDecode
 if not script\FindFirstChild "Version"
   with Instance.new "StringValue"
     .Name = "Version"
-    .Value = "aaaaa"
+    .Value = script.GitMeta.HeadCommitID.Value\sub 1,8
     .Parent = script
 if not script\FindFirstChild "PackageList"
   with Instance.new "ModuleScript"
     .Name = "PackageList"
-    .Source = "--[==[{}]==]"
+    .Source = "--[==[[]]==]"
     .Parent = script
 
 Freya = game.ServerStorage\FindFirstChild "Freya"
@@ -49,5 +48,8 @@ else
   FreyaStudio = script.Core.FreyaStudio
   print "[Freya] Installing Freya " .. script.Version.Value
   require(script.unpack) script
+
+-- Set the HttpService state back to the original
+HttpService.HttpEnabled = HttpEnabled
 
 return require FreyaStudio
