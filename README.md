@@ -34,7 +34,7 @@ Freya is a framework and template for developing with Roblox. Everything which F
 
 ### Adding it to your game
 
-Adding Freya will be as simple as copying and pasting a small script into your command bar. Just, not right now. You can't test it yet. It is recommended that you leave all of the Freya modules in their default locations so that you do not break compatibility with some other features.
+Currently, adding Freya to your game is simple: Because there are no branches to choose from for Freya, simply run `require(480740831)` in your Studio command bar and it will install Freya to your game. Isn't that easy? Freya can be found scattered about various services in folders called Freya.
 
 ### Configuring Freya
 
