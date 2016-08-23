@@ -7,16 +7,12 @@
 
 local ^
 
-HttpService = with game\GetService("HttpService")
+HttpService = with game\GetService "HttpService"
   HttpEnabled = .HttpEnabled
   IsStudio = pcall -> .HttpEnabled = not HttpEnabled
   return error "The Freya MainModule must be required from the Studio command bar" unless IsStudio
   .HttpEnabled = true
-  GET = \GetAsync
-  POST = \PostAsync
-  JSONEncode = \JSONEncode
-  JSONDecode = \JSONDecode
-  
+
 if not script\FindFirstChild "Version"
   with Instance.new "StringValue"
     .Name = "Version"
@@ -37,7 +33,7 @@ if Freya
     print "[Freya] Updating Freya to " .. script.Version.Value
     script.PackageList\Destroy!
     Freya.PackageList.Parent = script
-    Packages = script.PackageList.Source:sub(7,-5):gsub('^%s+',''):gsub('%s+$','');
+    Packages = script.PackageList.Source\sub(7,-5)\gsub('^%s+','')\gsub('%s+$','')
     require script.unpack script
     -- Reinstall packages
     FreyaStudio = require Freya.FreyaStudio
