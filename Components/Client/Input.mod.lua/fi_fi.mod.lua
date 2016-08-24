@@ -35,7 +35,7 @@ return {
     ["Greater Than"]      = "Kaksoispiste";
     Period                = "Piste";
     Slash                 = "Viiva";
-    ["Question Mark"]     = Alaviiva;
+    ["Question Mark"]     = "Alaviiva";
     ["Right Shift"]       = "Vasen Shift";
     ["Left Ctrl"]         = "Vasen Ctrl";
     ["Left Super"]        = "Vasen Super";
