@@ -12,7 +12,7 @@ IsServer = do
 
 ni = newproxy true
 
-Hybrid = (f) -> (...)
+Hybrid = (f) -> (...) ->
   return f select 2, ... if ... == ni else f ...
 IsInstance = do
   game = game
@@ -124,7 +124,7 @@ GroupMt = {
   __len: => @GetPlayers!
 }
 
-local RootPermission = newproxy false
+RootPermission = newproxy false
 Permissions['*'] = RootPermission
 
 GetPermission = (Permission) ->
@@ -152,7 +152,7 @@ CreatePermission = (Name) ->
     tPerm = CreatePermission tPermName
     Permissions[tPermName] = tPerm
     PermissionsParents[tPerm] = last
-    last = tPerm;
+    last = tPerm
   return last
 
 GetGroup = (Group) ->
@@ -179,10 +179,10 @@ CreateGroup = (Name, Inherits) ->
   mt = getmetatable newGroup
   for k,v in pairs GroupMt do mt[k] = v
   Groups[newGroup] = {
-    Inherits = Inherits
-    Permissions = newPermissions
-    Users = {}
-    Name = Name
+    Inherits: Inherits
+    Permissions: newPermissions
+    Users: {}
+    Name: Name
   }
   GroupLinks[Name] = newGroup
   return newGroup
@@ -213,11 +213,11 @@ GetUserPermission = (User, Permission) ->
       ptemp = PermissionsParents[ptemp]
 
 Controller = {
-  GetUserPermission = Hyrbid GetUserPermission
-  GetPermission = Hybrid GetPermission
-  CreateGroup = Hybrid CreateGroup
-  CreatePermission = Hyrbid CreatePermission
-  GetGroup = Hyrbid GetGroup
+  GetUserPermission: Hyrbid GetUserPermission
+  GetPermission: Hybrid GetPermission
+  CreateGroup: Hybrid CreateGroup
+  CreatePermission: Hyrbid CreatePermission
+  GetGroup: Hyrbid GetGroup
 }
 
 with getmetatable ni
