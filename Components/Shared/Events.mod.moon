@@ -11,6 +11,7 @@ Events = setmetatable {}, {__mode = 'k'}
 Hold = setmetatable {}, {__mode = 'k'}
 Intercept = setmetatable {}, {__mode = 'k'}
 Disconnections = setmetatable {}, {__mode = 'k'}
+Handle = setmetatable {}, {__mode = 'k'}
 
 ni = newproxy true
 
@@ -26,6 +27,20 @@ local eClass = {
     ar = pack(...)
     Hold[@] = ar
     intercept = Intercept[@]
+    handle = Handle[@]
+    if handle
+      htab = {
+        Arguments = ar
+        Cancel = false
+        SuppressIntercept = false
+        Intercept = intercept
+        Event = @
+      }
+      handle htab
+      if htab.Cancel
+        return nil
+      if htab.SuppressIntercept
+        intercept = nil
     if intercept
       ret = pack intercept ...
       if ret[1] ~= nil or ret.n > 1
@@ -43,9 +58,14 @@ local eClass = {
 		old = Intercept[@]
 		Intercept[@] = f
 		return old
-};
-eClass.Fire = eClass.fire;
-eClass.Intercept = eClass.intercept;
+  handle: (f) =>
+    old = Handle[@]
+    Handle[@] = f
+    return old
+}
+eClass.Fire = eClass.fire
+eClass.Intercept = eClass.intercept
+eClass.Handle = eClass.handle
 
 dClass = {
   disconnect = =>
@@ -66,9 +86,6 @@ Event.new = ->
   ne = Instance.new "BindableEvent"
   Events[eni] = ne
   return eni
-
-Event.Intent = (...) ->
-  IntentName = extract ...
 
 Event.Connection = (...) ->
   f = extract ...
