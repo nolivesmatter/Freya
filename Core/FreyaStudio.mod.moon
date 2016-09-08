@@ -19,6 +19,9 @@ Controller =
   Load: Hybrid (UtilPackage) ->
     -- Load something from Util
     return nil
+  Uninstall: Hybrid (Package) ->
+    -- Use the package uninstall script or use metadata
+    return nil
 
 with getmetatable ni
   .__index = Controller
