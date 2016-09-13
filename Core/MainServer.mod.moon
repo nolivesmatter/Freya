@@ -11,6 +11,8 @@ Hybrid = (f) -> (...) ->
 
 Components = {}
 
+ComponentAdded = Components.Events.new!
+
 Controller = with {
     GetComponent: Hybrid (ComponentName) ->
       component = Components[ComponentName]
@@ -22,6 +24,7 @@ Controller = with {
       if Components[ComponentName]
         warn "[WARN][Freya Server] Overwriting component #{ComponentName}"
       Components[ComponentName] = ComponentValue
+      ComponentAdded\fire!
   }
   .GetService = .GetComponent
   .SetService = .SetComponent
