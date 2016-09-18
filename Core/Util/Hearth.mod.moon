@@ -55,7 +55,7 @@ Hearth = {
   UpdatePackage: Hybrid (Package) ->
     apkg = Package
     -- Verify the Package is a proper package
-    if type(Package) == 'userdata' and
+    if type(Package) == 'userdata'
       Package = require Package -- Assume ModuleScript.
       -- God forbid should it be anything else.
     if type(Package) ~= 'table'
@@ -83,7 +83,7 @@ Hearth = {
   UninstallPackage: Hybrid (Package) ->
     apkg = Package
     -- Verify the Package is a proper package
-    if type(Package) == 'userdata' and
+    if type(Package) == 'userdata'
       Package = require Package -- Assume ModuleScript.
       -- God forbid should it be anything else.
     if type(Package) ~= 'table'
