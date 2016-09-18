@@ -4,6 +4,8 @@
 --// | inheritance, and replication management
 --//
 
+local ^
+
 IsServer = do
   RunService = game\GetService "RunService"
   if RunService\IsRunMode!
@@ -113,7 +115,6 @@ GroupClass = {
   HasOnlyPermission: (...) => not not @GetOnlyPermission ...
   GetName: =>
     @ = Groups[@]
-    permission = GetPermission permission
     return error "Invalid group for GetName", 2 unless @
     return @Name
 }
