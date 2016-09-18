@@ -7,11 +7,11 @@
 --//
 
 Event = {}
-Events = setmetatable {}, {__mode = 'k'}
-Hold = setmetatable {}, {__mode = 'k'}
-Intercept = setmetatable {}, {__mode = 'k'}
-Disconnections = setmetatable {}, {__mode = 'k'}
-Handle = setmetatable {}, {__mode = 'k'}
+Events = setmetatable {}, __mode: 'k'
+Hold = setmetatable {}, __mode: 'k'
+Intercept = setmetatable {}, __mode: 'k'
+Disconnections = setmetatable {}, __mode: 'k'
+Handle = setmetatable {}, __mode: 'k'
 
 ni = newproxy true
 
@@ -22,7 +22,7 @@ pack = (...) -> {
 extract = (...) ->
   return select 2, ... if ... == ni else ...
 
-local eClass = {
+eClass = {
   fire: (...) =>
     ar = pack(...)
     Hold[@] = ar
@@ -30,11 +30,11 @@ local eClass = {
     handle = Handle[@]
     if handle
       htab = {
-        Arguments = ar
-        Cancel = false
-        SuppressIntercept = false
-        Intercept = intercept
-        Event = @
+        Arguments: ar
+        Cancel: false
+        SuppressIntercept: false
+        Intercept: intercept
+        Event: @
       }
       handle htab
       if htab.Cancel
@@ -47,17 +47,17 @@ local eClass = {
         return unpack ret, 1, ret.n
     Events[@]\Fire!
   connect: (f) =>
-		Events[@].Event\connect ->
+    Events[@].Event\connect ->
       ar = Hold[@]
       f unpack ar, 1, ar.n
-	wait: =>
-		Events[@]\wait!
-		ar = Hold[@]
+  wait: =>
+    Events[@]\wait!
+    ar = Hold[@]
     unpack ar, 1, ar.n
-	intercept: (f) =>
-		old = Intercept[@]
-		Intercept[@] = f
-		return old
+  intercept: (f) =>
+    old = Intercept[@]
+    Intercept[@] = f
+    return old
   handle: (f) =>
     old = Handle[@]
     Handle[@] = f
@@ -68,15 +68,16 @@ eClass.Intercept = eClass.intercept
 eClass.Handle = eClass.handle
 
 dClass = {
-  disconnect = =>
+  disconnect: =>
     if Disconnections[@]
       Disconnections[@]!
       Disconnections[@] = nil
     else
       error "Attempt to disconnect dead connection or invalid connection", 2
-  connected = => not not Disconnections[@]
+  connected: => not not Disconnections[@]
 }
 dClass.Connected = dClass.connected
+dClass.IsConnected = dClass.Connected
 
 Event.new = ->
   eni = newproxy true
