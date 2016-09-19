@@ -5,6 +5,7 @@
 --//
 
 local ^
+local Intent
 
 IsServer = do
   RunService = game\GetService "RunService"
@@ -54,6 +55,7 @@ GroupClass = {
     ug = UserGroups[user]
     ug[#ug+1] = self
     @Players[user] = true
+    Intent\Fire "Permissions.AddUser", @Name, user
   HasUser: (user) => -- Drako: HasUser? () Automatically casts returns to bool
     @ = Groups[@]
     return error "Invalid group for HasUser", 2 unless @
@@ -74,6 +76,7 @@ GroupClass = {
       if del
         ug[i] = ug[i+1]
     @Players[user] = nil
+    Intent\Fire "Permissions.RemoveUser", @Name, user
   GetPermissions: =>
     @ = Groups[@]
     return error "Invalid group for GetPermissions", 2 unless @
@@ -84,18 +87,21 @@ GroupClass = {
     return error "Invalid group for AllowPermission", 2 unless @
     return error "Invalid permission for AllowPermission", 2 unless permission
     @Permissions[permission] = true
+    Intent\Fire "Permissions.AllowPermission", @Name, permission
   RemovePermission: (permission) =>
     @ = Groups[@]
     permission = GetPermission permission
     return error "Invalid group for RemovePermission", 2 unless @
     return error "Invalid permission for RemovePermission", 2 unless permission
     @Permissions[permission] = nil
+    Intent\Fire "Permissions.RemovePermission", @Name, permission
   BlockPermission: (permission) =>
     @ = Groups[@]
     permission = GetPermission permission
     return error "Invalid group for BlockPermission", 2 unless @
     return error "Invalid permission for BlockPermission", 2 unless permission
     @Permissions[permission] = false
+    Intent\Fire "Permissions.BlockPermission", @Name, permission
   GetPermission: (permission) =>
     @ = Groups[@]
     permission = GetPermission permission
@@ -222,7 +228,10 @@ Controller = {
 }
 
 with getmetatable ni
-  .__index = Controller
+  .__index = (k) =>
+    Intent = _G.Freya.GetComponent "Intents"
+    .__index = Controller
+    @[k]
   .__tostring = -> "Freya Permissions Controller"
   .__metatable = "Locked metatable: Freya"
 
