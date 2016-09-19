@@ -3,6 +3,15 @@
 --// | Make sure everything actually loads
 --//
 
+-- Enable all in StarterPlayerScripts
+for k,v in next, game.StarterPlayer.StarterPlayerScripts:GetChildren() do
+  if v ~= script then
+    if v.Enabled.Value then
+      v.Disabled = false
+    end
+  end
+end
+
 -- Get our Freya Main
 local Freya = require(game.ServerStorage.Freya.Main);
 
