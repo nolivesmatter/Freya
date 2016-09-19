@@ -52,6 +52,15 @@ Hearth = {
         opkg\Destroy!
       .Package.Parent = pkgloc
       if .Install then .Install .Package
+      if .Package\IsA "Script"
+        -- Sort out other package metadata for Scripts
+        pak = .Package
+        if .LoadOrder
+          lo = .LoadOrder
+          with Instance.new "IntValue"
+            .Name = "LoadOrder"
+            .Value = lo
+            .Parent = pak
   UpdatePackage: Hybrid (Package) ->
     apkg = Package
     -- Verify the Package is a proper package
@@ -80,6 +89,15 @@ Hearth = {
         if .Update then .Update opkg, .Package
         opkg\Destroy!
         .Package.Parent = pkgloc
+        if .Package\IsA "Script"
+        -- Sort out other package metadata for Scripts
+          pak = .Package
+          if .LoadOrder
+            lo = .LoadOrder
+            with Instance.new "IntValue"
+              .Name = "LoadOrder"
+              .Value = lo
+              .Parent = pak
   UninstallPackage: Hybrid (Package) ->
     apkg = Package
     -- Verify the Package is a proper package
