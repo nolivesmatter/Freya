@@ -20,6 +20,11 @@ Clear = (Location, Name) ->
   for v in *@Core.ReplicatedFirst\GetChildren!
     print "*", v.Name
     v.Parent = RFFreya
+    if v\IsA "Script"
+      with Instance.new "BoolValue"
+        .Name = "Enabled"
+        .Value = false
+        .Parent = v
 
   -- ServerScriptService
   Clear game.ServerScriptService, "Freya"
@@ -30,6 +35,11 @@ Clear = (Location, Name) ->
   for v in *@Core.ServerScriptService\GetChildren!
     print "*", v.Name
     v.Parent = SSSFreya
+    if v\IsA "Script"
+      with Instance.new "BoolValue"
+        .Name = "Enabled"
+        .Value = false
+        .Parent = v
 
   -- StarterPlayer
   -- | StarterPlayerScripts
@@ -41,6 +51,11 @@ Clear = (Location, Name) ->
   for v in *@Core.StarterPlayerScripts\GetChildren!
     print "*", v.Name
     v.Parent = SPSFreya
+    if v\IsA "Script"
+      with Instance.new "BoolValue"
+        .Name = "Enabled"
+        .Value = false
+        .Parent = v
 
   -- Components
   -- | Server
