@@ -30,6 +30,7 @@ IsInstance = do
     return false
 
 Permissions = setmetatable {}, __mode: 'v'
+PermissionNames = setmetatable {}, __mode: 'k'
 PermissionsParents = setmetatable {}, __mode: 'k'
 Groups = setmetatable {}, __mode: 'k'
 GroupLinks = setmetatable {}, __mode: 'v'
@@ -40,7 +41,13 @@ UserGroups = setmetatable {}, {
     @[k] = v
     return v
 }
-UserPermissions = setmetatable {}, __mode: 'k'
+UserPermissions = setmetatable {}, {
+  __mode: 'k'
+  __index: (k) =>
+    v = {}
+    @[k] = v
+    return v
+}
 GroupClass = {
   GetPlayers: =>
     @ = Groups[@]
@@ -156,11 +163,16 @@ CreatePermission = (Name) ->
   for v in Name\gmatch "([^%.]*)"
     t[#t+1] = v
     tPermName = table.concat t, '.'
-    tPerm = CreatePermission tPermName
+    tPerm = newproxy true
+    PermissionNames[tPerm] = tPermName
     Permissions[tPermName] = tPerm
     PermissionsParents[tPerm] = last
     last = tPerm
   return last
+  
+GetPermissionName = (Permission) ->
+  Permission = GetPermission(Permission)
+  return PermissionNames[Permission] if Permission
 
 GetGroup = (Group) ->
   return unless Group
@@ -196,9 +208,9 @@ CreateGroup = (Name, Inherits) ->
 
 GetUserPermission = (User, Permission) ->
   -- Check validity first
-  return error "Invalid user for UserHasPermission", 2 unless IsInstance(user) and user\IsA "Player"
+  return error "Invalid user for GetUserPermission", 2 unless IsInstance(user) and user\IsA "Player"
   Permission = GetPermission Permission
-  return error "Invalid permission for UserHasPermission", 2 unless Permission
+  return error "Invalid permission for GetUserPermission", 2 unless Permission
 
   -- Check User
   do
@@ -219,12 +231,40 @@ GetUserPermission = (User, Permission) ->
         return e, p if e ~= nil
       ptemp = PermissionsParents[ptemp]
 
+AllowUserPermission = (User, Permission) ->
+  -- Check validity first
+  return error "Invalid user for SetUserPermission", 2 unless IsInstance(user) and user\IsA "Player"
+  Permission = GetPermission Permission
+  return error "Invalid permission for SetUserPermission", 2 unless Permission
+  UserPermissions[User][Permission] = true
+  Intent\Fire "Permissions.AllowUserPermission", User, GetPermissionName Permission
+  
+BlockUserPermission = (User, Permission) ->
+  -- Check validity first
+  return error "Invalid user for SetUserPermission", 2 unless IsInstance(user) and user\IsA "Player"
+  Permission = GetPermission Permission
+  return error "Invalid permission for SetUserPermission", 2 unless Permission
+  UserPermissions[User][Permission] = false
+  Intent\Fire "Permissions.BlockUserPermission", User, GetPermissionName Permission
+  
+RemoveUserPermission = (User, Permission) ->
+  -- Check validity first
+  return error "Invalid user for SetUserPermission", 2 unless IsInstance(user) and user\IsA "Player"
+  Permission = GetPermission Permission
+  return error "Invalid permission for SetUserPermission", 2 unless Permission
+  UserPermissions[User][Permission] = nil
+  Intent\Fire "Permissions.RemoveUserPermission", User, GetPermissionName Permission
+
 Controller = {
   GetUserPermission: Hyrbid GetUserPermission
   GetPermission: Hybrid GetPermission
   CreateGroup: Hybrid CreateGroup
   CreatePermission: Hyrbid CreatePermission
   GetGroup: Hyrbid GetGroup
+  GetPermissionName: Hyrbid GetPermissionName
+  AllowUserPermission: Hybrid AllowUserPermission
+  BlockUserPermission: Hybrid BlockUserPermission
+  RemoveUserPermission: Hybrid RemoveUserPermission
 }
 
 with getmetatable ni
