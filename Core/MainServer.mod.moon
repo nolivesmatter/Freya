@@ -8,6 +8,18 @@ ni = newproxy true
 
 Hybrid = (f) -> (...) ->
   return f select 2, ... if ... == ni else f ...
+  
+IsInstance = do
+  game = game
+  gs = game.GetService
+  type = type
+  pcall = pcall
+  (o using nil) ->
+    type = type o
+    return false if type ~= 'userdata'
+    s,e = pcall gs, game, o
+    return s and not e
+  
 
 Components = {}
 
@@ -22,7 +34,10 @@ ComponentAdded = Components.Events.new!
 Controller = with {
     GetComponent: Hybrid (ComponentName) ->
       component = Components[ComponentName]
-      return component if component
+      if component
+        if IsInstance(component)
+          component = require component
+        return component
       warn "[WARN][Freya Server] Yielding for #{ComponentName}"
       while ComponentAdded\wait! ~= ComponentName do nothing
       return Components[ComponentName]
