@@ -4,7 +4,7 @@
 --//
 
 -- Enable all in StarterPlayerScripts
-for k,v in next, game.StarterPlayer.StarterPlayerScripts:GetChildren() do
+for k,v in next, game.StarterPlayer.StarterPlayerScripts.Freya:GetChildren() do
   if v ~= script then
     if v.Enabled.Value then
       v.Disabled = false
