@@ -258,12 +258,12 @@ RemoveUserPermission = (User, Permission) ->
   Intent\Fire "Permissions.RemoveUserPermission", User, GetPermissionName Permission
 
 Controller = {
-  GetUserPermission: Hyrbid GetUserPermission
+  GetUserPermission: Hybrid GetUserPermission
   GetPermission: Hybrid GetPermission
   CreateGroup: Hybrid CreateGroup
-  CreatePermission: Hyrbid CreatePermission
-  GetGroup: Hyrbid GetGroup
-  GetPermissionName: Hyrbid GetPermissionName
+  CreatePermission: Hybrid CreatePermission
+  GetGroup: Hybrid GetGroup
+  GetPermissionName: Hybrid GetPermissionName
   AllowUserPermission: Hybrid AllowUserPermission
   BlockUserPermission: Hybrid BlockUserPermission
   RemoveUserPermission: Hybrid RemoveUserPermission
