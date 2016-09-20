@@ -10,14 +10,14 @@ RIntent = game.ReplicatedStorage\WaitForChild("Freya")\WaitForChild("Intent")
 
 Events = require script.Parent.Events
 
-Intent = Events.new!
-Intent\Intercept (name, ...) -> IIntercept[name] and IIntercept[name] ...
-
 cxitio = {}
 ni = newproxy true
 
 IIntercept = {}
 OIntercept = {}
+
+Intent = Events.new!
+Intent\Intercept (name, ...) -> IIntercept[name] and IIntercept[name] ...
 
 IsClient = do
   RunService = game\GetService "RunService"
