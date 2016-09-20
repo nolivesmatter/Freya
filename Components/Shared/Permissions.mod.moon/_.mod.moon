@@ -5,7 +5,7 @@
 --//
 
 local ^
-local Intent
+local Intent = require script.Parent.Intents
 
 IsServer = do
   RunService = game\GetService "RunService"
@@ -210,7 +210,7 @@ CreateGroup = (Name, Inherits) ->
 
 GetUserPermission = (User, Permission) ->
   -- Check validity first
-  return error "Invalid user for GetUserPermission", 2 unless IsInstance(user) and user\IsA "Player"
+  return error "Invalid user for GetUserPermission", 2 unless IsInstance(User) and User\IsA "Player"
   Permission = GetPermission Permission
   return error "Invalid permission for GetUserPermission", 2 unless Permission
 
@@ -219,7 +219,7 @@ GetUserPermission = (User, Permission) ->
     ptemp = Permission
     plist = UserPermissions[User]
     while ptemp
-      v = plist[permission]
+      v = plist[Permission]
       return v, ptemp if v ~= nil
       ptemp = PermissionsParents[ptemp]
 
@@ -235,7 +235,7 @@ GetUserPermission = (User, Permission) ->
 
 AllowUserPermission = (User, Permission) ->
   -- Check validity first
-  return error "Invalid user for SetUserPermission", 2 unless IsInstance(user) and user\IsA "Player"
+  return error "Invalid user for SetUserPermission", 2 unless IsInstance(User) and User\IsA "Player"
   Permission = GetPermission Permission
   return error "Invalid permission for SetUserPermission", 2 unless Permission
   UserPermissions[User][Permission] = true
@@ -243,7 +243,7 @@ AllowUserPermission = (User, Permission) ->
   
 BlockUserPermission = (User, Permission) ->
   -- Check validity first
-  return error "Invalid user for SetUserPermission", 2 unless IsInstance(user) and user\IsA "Player"
+  return error "Invalid user for SetUserPermission", 2 unless IsInstance(User) and User\IsA "Player"
   Permission = GetPermission Permission
   return error "Invalid permission for SetUserPermission", 2 unless Permission
   UserPermissions[User][Permission] = false
@@ -251,7 +251,7 @@ BlockUserPermission = (User, Permission) ->
   
 RemoveUserPermission = (User, Permission) ->
   -- Check validity first
-  return error "Invalid user for RemoveUserPermission", 2 unless IsInstance(user) and user\IsA "Player"
+  return error "Invalid user for RemoveUserPermission", 2 unless IsInstance(User) and User\IsA "Player"
   Permission = GetPermission Permission
   return error "Invalid permission for RemoveUserPermission", 2 unless Permission
   UserPermissions[User][Permission] = nil
@@ -314,10 +314,7 @@ else
     CreateGroup Group, [GetGroup v for v in *Inherits]
 
 with getmetatable ni
-  .__index = (k) =>
-    Intent = _G.Freya.GetComponent "Intents"
-    .__index = Controller
-    @[k]
+  .__index = Controller
   .__tostring = -> "Freya Permissions Controller"
   .__metatable = "Locked metatable: Freya"
 
