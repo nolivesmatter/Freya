@@ -114,7 +114,7 @@ else
   RIntent.OnServerEvent\connect (player, name, ...) ->
     Intent\Fire name, false, player, ...
 
-with ni
+with getmetatable ni
   .__index = (k) ->
     Events = _G.Freya\GetComponent "Events"
     Intent = Events.new!
