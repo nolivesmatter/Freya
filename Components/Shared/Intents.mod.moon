@@ -7,9 +7,11 @@
 --//
 
 RIntent = game.ReplicatedStorage\WaitForChild("Freya")\WaitForChild("Intent")
-local Intent
 
-local Events
+Events = require script.Parent.Events
+
+Intent = Events.new!
+Intent\Intercept (name, ...) -> IIntercept[name] and IIntercept[name] ...
 
 cxitio = {}
 ni = newproxy true
@@ -114,15 +116,11 @@ else
   RIntent.OnServerEvent\connect (player, name, ...) ->
     Intent\Fire name, false, player, ...
 
+cxitio.Intent = Intent
+cxitio.RIntent = RIntent
+
 with getmetatable ni
-  .__index = (k) ->
-    Events = _G.Freya\GetComponent "Events"
-    Intent = Events.new!
-    Intent\Intercept (name, ...) -> IIntercept[name] and IIntercept[name] ...
-    cxitio.Intent = Intent
-    cxitio.RIntent = RIntent
-    .__index = cxitio
-    cxitio[k]
+  .__index = cxitio
   .__tostring = -> "Freya Intents component"
   .__metatable = "Locked Metatable: Freya"
 
