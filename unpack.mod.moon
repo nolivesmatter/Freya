@@ -21,6 +21,7 @@ Clear = (Location, Name) ->
     print "*", v.Name
     v.Parent = RFFreya
     if v\IsA "Script"
+      v.Disabled = true
       with Instance.new "BoolValue"
         .Name = "Enabled"
         .Value = false
@@ -36,6 +37,7 @@ Clear = (Location, Name) ->
     print "*", v.Name
     v.Parent = SSSFreya
     if v\IsA "Script"
+      v.Disabled = true
       with Instance.new "BoolValue"
         .Name = "Enabled"
         .Value = false
@@ -52,6 +54,7 @@ Clear = (Location, Name) ->
     print "*", v.Name
     v.Parent = SPSFreya
     if v\IsA "Script"
+      v.Disabled = true
       with Instance.new "BoolValue"
         .Name = "Enabled"
         .Value = false
