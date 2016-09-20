@@ -6,7 +6,7 @@
 -- Sort out ReplicatedFirst
 -- -1 is for Freya-async. They'll get Freya themselves via Freya.Main
 wait(1); -- I just want to hope that'll allow me to make sure everything is in.
-for k,v in script.Parent:GetChildren() do
+for k,v in next, script.Parent:GetChildren() do
   if v ~= script then
     if v:IsA("LocalScript") and v.Enabled.Value then
       if v:FindFirstChild("LoadOrder") and v.LoadOrder.Value == -1 then
@@ -21,7 +21,7 @@ local Freya = require(game.ReplicatedStorage:WaitForChild("Freya"):WaitForChild(
 
 -- ReplicatedFirst, after Freya exists.
 local rflist = {}
-for k,v in script.Parent:GetChildren() do
+for k,v in next, script.Parent:GetChildren() do
   if v ~= script then
     if v:IsA("LocalScript") and v.Enabled.Value then
       if v:FindFirstChild("LoadOrder") and v.LoadOrder.Value == -1 then else
