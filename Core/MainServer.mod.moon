@@ -11,6 +11,12 @@ Hybrid = (f) -> (...) ->
 
 Components = {}
 
+for v in *game.ReplicatedStorage.Freya.Components.Shared\GetChildren!
+  Components[v.Name] = require v
+
+for v in *game.ServerStorage.Freya.Components\GetChildren!
+  Components[v.Name] = require v
+
 ComponentAdded = Components.Events.new!
 
 Controller = with {
@@ -30,12 +36,6 @@ Controller = with {
   .SetService = .SetComponent
   .GetModule = .GetComponent
   .SetModule = .SetComponent
-
-for v in *game.ReplicatedStorage.Freya.Components.Shared\GetChildren!
-  Components[v.Name] = require v
-
-for v in *game.ServerStorage.Freya.Components\GetChildren!
-  Components[v.Name] = require v
 
 with getmetatable ni
   .__index = Controller
