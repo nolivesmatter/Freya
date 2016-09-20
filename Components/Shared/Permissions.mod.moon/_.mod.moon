@@ -5,7 +5,7 @@
 --//
 
 local ^
-local Intent = require script.Parent.Intents
+Intent = require script.Parent.Intents
 
 IsServer = do
   RunService = game\GetService "RunService"
