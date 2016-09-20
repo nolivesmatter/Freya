@@ -2,13 +2,13 @@
 -- Later, scripts will be managed by Freya.
 -- For now, they're not. For reasons.
 
-local Key = script.Parent.Key.Value
+local Key = script.Key.Value
 Key = #Key > 1 and Key or "YourKeyHere" -- For 'secure' imp
 
-local Game = script.Parent.Game.Value
+local Game = script.Game.Value
 Game = #Game > 1 and Game or "YourGameHere" -- For paranoids
 
-local Version = script.Parent.Version.Value
+local Version = script.Version.Value
 Version = Version > 1 and Version or 299451592 -- Default to bleeding-edge
 
 local Valkyrie = require(Version)(Game, Key);
