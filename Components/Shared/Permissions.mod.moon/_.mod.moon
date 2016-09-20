@@ -270,7 +270,7 @@ Controller = {
 }
 
 if IsServer
-  f = => @ or nil
+  f = => @ and nil
   Intent\Filter "Permissions.RemoveUserPermission", f
   Intent\Filter "Permissions.BlockUserPermission", f
   Intent\Filter "Permissions.AllowUserPermission", f
