@@ -94,21 +94,21 @@ GroupClass = {
     return error "Invalid group for AllowPermission", 2 unless @
     return error "Invalid permission for AllowPermission", 2 unless permission
     @Permissions[permission] = true
-    Intent\Fire "Permissions.AllowPermission", @Name, permission
+    Intent\Fire "Permissions.AllowPermission", @Name, GetPermissionName permission
   RemovePermission: (permission) =>
     @ = Groups[@]
     permission = GetPermission permission
     return error "Invalid group for RemovePermission", 2 unless @
     return error "Invalid permission for RemovePermission", 2 unless permission
     @Permissions[permission] = nil
-    Intent\Fire "Permissions.RemovePermission", @Name, permission
+    Intent\Fire "Permissions.RemovePermission", @Name, GetPermissionName permission
   BlockPermission: (permission) =>
     @ = Groups[@]
     permission = GetPermission permission
     return error "Invalid group for BlockPermission", 2 unless @
     return error "Invalid permission for BlockPermission", 2 unless permission
     @Permissions[permission] = false
-    Intent\Fire "Permissions.BlockPermission", @Name, permission
+    Intent\Fire "Permissions.BlockPermission", @Name, GetPermissionName permission
   GetPermission: (permission) =>
     @ = Groups[@]
     permission = GetPermission permission
