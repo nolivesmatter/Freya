@@ -168,6 +168,7 @@ CreatePermission = (Name) ->
     Permissions[tPermName] = tPerm
     PermissionsParents[tPerm] = last
     last = tPerm
+  Intent\Fire "Permissions.CreatePermission", Name
   return last
   
 GetPermissionName = (Permission) ->
@@ -204,6 +205,7 @@ CreateGroup = (Name, Inherits) ->
     Name: Name
   }
   GroupLinks[Name] = newGroup
+  Intent\Fire "Permissions.CreateGroup", Group, [v\GetName! for v in *Inherits]
   return newGroup
 
 GetUserPermission = (User, Permission) ->
@@ -249,9 +251,9 @@ BlockUserPermission = (User, Permission) ->
   
 RemoveUserPermission = (User, Permission) ->
   -- Check validity first
-  return error "Invalid user for SetUserPermission", 2 unless IsInstance(user) and user\IsA "Player"
+  return error "Invalid user for RemoveUserPermission", 2 unless IsInstance(user) and user\IsA "Player"
   Permission = GetPermission Permission
-  return error "Invalid permission for SetUserPermission", 2 unless Permission
+  return error "Invalid permission for RemoveUserPermission", 2 unless Permission
   UserPermissions[User][Permission] = nil
   Intent\Fire "Permissions.RemoveUserPermission", User, GetPermissionName Permission
 
@@ -266,6 +268,50 @@ Controller = {
   BlockUserPermission: Hybrid BlockUserPermission
   RemoveUserPermission: Hybrid RemoveUserPermission
 }
+
+if IsServer
+  f = => @ or nil
+  Intent\Filter "Permissions.RemoveUserPermission", f
+  Intent\Filter "Permissions.BlockUserPermission", f
+  Intent\Filter "Permissions.AllowUserPermission", f
+  Intent\Filter "Permissions.CreatePermission", f
+  Intent\Filter "Permissions.AllowPermission", f
+  Intent\Filter "Permissions.BlockPermission", f
+  Intent\Filter "Permissions.RemovePermission", f
+  Intent\Filter "Permissions.AddUser", f
+  Intent\Filter "Permissions.RemoveUser", f
+  Intent\Filter "Permissions.CreateGroup", f
+else
+  Intent\Subscribe "Permissions.RemoveUserPermission", (...) =>
+    return if @
+    RemoveUserPermission ...
+  Intent\Subscribe "Permissions.BlockUserPermission", (...) =>
+    return if @
+    BlockUserPermission ...
+  Intent\Subscribe "Permissions.AllowUserPermission", (...) =>
+    return if @
+    AllowUserPermission ...
+  Intent\Subscribe "Permissions.CreatePermission", (...) =>
+    return if @
+    CreatePermission ...
+  Intent\Subscribe "Permissions.AllowPermission", (Group, Permission) =>
+    return if @
+    GetGroup(Group)\AllowPermission Permission
+  Intent\Subscribe "Permissions.BlockPermission", (Group, Permission) =>
+    return if @
+    GetGroup(Group)\BlockPermission Permission
+  Intent\Subscribe "Permissions.RemovePermission", (Group, Permission) =>
+    return if @
+    GetGroup(Group)\RemovePermission Permission
+  Intent\Subscribe "Permissions.AddUser", (Group, User) =>
+    return if @
+    GetGroup(Group)\AddUser User
+  Intent\Subscribe "Permissions.RemoveUser", (Group, User) =>
+    return if @
+    GetGroup(Group)\RemoveUser User
+  Intent\Subscribe "Permissions.CreateGroup", (Group, Inherits) =>
+    return if @
+    CreateGroup Group, [GetGroup v for v in *Inherits]
 
 with getmetatable ni
   .__index = (k) =>
