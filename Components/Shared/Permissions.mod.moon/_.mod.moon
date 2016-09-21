@@ -219,7 +219,7 @@ GetUserPermission = (User, Permission) ->
     ptemp = Permission
     plist = UserPermissions[User]
     while ptemp
-      v = plist[Permission]
+      v = plist[ptemp]
       return v, ptemp if v ~= nil
       ptemp = PermissionsParents[ptemp]
 
