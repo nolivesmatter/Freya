@@ -160,7 +160,7 @@ CreatePermission = (Name) ->
   return Permission if Permission
   t = {}
   last = RootPermission
-  for v in Name\gmatch "([^%.]*)"
+  for v in Name\gmatch "([^%.]+)"
     t[#t+1] = v
     tPermName = table.concat t, '.'
     tPerm = newproxy true
