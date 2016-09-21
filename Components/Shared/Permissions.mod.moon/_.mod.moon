@@ -52,37 +52,37 @@ GroupClass = {
   GetPlayers: =>
     @ = Groups[@]
     return error "Invalid group for GetPlayers", 2 unless @
-    return [k for k,v in pairs @Players]
+    return [k for k,v in pairs @Users]
   AddUser: (user) =>
-    self = @
+    this = @
     @ = Groups[@]
     return error "Invalid group for AddUser", 2 unless @
     return error "Invalid user for AddUser", 2 unless IsInstance(user) and user\IsA "Player"
-    return if @Players[user]
+    return if @Users[user]
     ug = UserGroups[user]
-    ug[#ug+1] = self
-    @Players[user] = true
+    ug[#ug+1] = this
+    @Users[user] = true
     Intent\Fire "Permissions.AddUser", @Name, user
   HasUser: (user) => -- Drako: HasUser? () Automatically casts returns to bool
     @ = Groups[@]
     return error "Invalid group for HasUser", 2 unless @
     return error "You must supply a user for HasUser", 2 unless user
-    return not not @Players[user]
+    return not not @Users[user]
   RemoveUser: (user) =>
-    self = @
+    this = @
     @ = Groups[@]
     return error "Invalid group for RemoveUser", 2 unless @
     return error "You must supply a user for RemoveUser", 2 unless user
-    return unless @Players[user]
+    return unless @Users[user]
     ug = UserGroups[user]
     del = false
     for i=1,#ug
-      if ug[i] == self
+      if ug[i] == this
         ug[i] = nil
         del = true
       if del
         ug[i] = ug[i+1]
-    @Players[user] = nil
+    @Users[user] = nil
     Intent\Fire "Permissions.RemoveUser", @Name, user
   GetPermissions: =>
     @ = Groups[@]
@@ -191,11 +191,11 @@ CreateGroup = (Name, Inherits) ->
   else
     Inherits = {}
   return GroupLinks[Name] if GroupLinks[Name]
-  newPermissions = setmetatable {}, __index: (k) =>
-    for v in *@Inherits
-      perm = v\HasPermission k
-      return perm if perm ~= nil
   newGroup = newproxy true
+  newPermissions = setmetatable {}, __index: (k) =>
+    for v in *Inherits
+      perm = v\GetOnlyPermission k
+      return perm if perm ~= nil
   mt = getmetatable newGroup
   for k,v in pairs GroupMt do mt[k] = v
   Groups[newGroup] = {
@@ -229,8 +229,8 @@ GetUserPermission = (User, Permission) ->
     ptemp = Permission
     while ptemp
       for v in *glist
-        e,p = v\GetOnlyPermission ptemp
-        return e, p if e ~= nil
+        e = v\GetOnlyPermission ptemp
+        return e, ptemp if e ~= nil
       ptemp = PermissionsParents[ptemp]
 
 AllowUserPermission = (User, Permission) ->
