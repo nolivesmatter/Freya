@@ -205,7 +205,7 @@ CreateGroup = (Name, Inherits) ->
     Name: Name
   }
   GroupLinks[Name] = newGroup
-  Intent\Fire "Permissions.CreateGroup", Group, [v\GetName! for v in *Inherits]
+  Intent\Fire "Permissions.CreateGroup", Name, [v\GetName! for v in *Inherits]
   return newGroup
 
 GetUserPermission = (User, Permission) ->
