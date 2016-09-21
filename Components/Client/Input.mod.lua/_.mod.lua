@@ -3,9 +3,9 @@
 
 local Controller = {};
 local this = newproxy(true);
-local IntentService = _G.Valkyrie:GetComponent "IntentService";
-local Event = _G.Valkyrie:GetComponent "ValkyrieEvents";
-local Translation = _G.Valkyrie:GetComponent "Translation";
+local IntentService = require(game.ReplicatedStorage.Freya.Components.Shared.Intents);
+local Event = require(game.ReplicatedStorage.Freya.Components.Shared.Events);
+-- local Translation = _G.Valkyrie:GetComponent "Translation";
 local RenderStep = game:GetService('RunService').RenderStepped;
 
 local function extract(...) -- Dynamic methods are pretty much standard now
@@ -245,7 +245,7 @@ local InputSources, LinkedTypes, LinkedNames do
 
 
     -- ~ Keyboard Translation aliases
-    local _translations = {};
+    --[[local _translations = {};
     for k,v in next, Keyboard do
       local n = LinkedNames[v];
       _translations[n] = {en_us = n};
@@ -262,7 +262,7 @@ local InputSources, LinkedTypes, LinkedNames do
     end;
     for k,v in next, _translations do
       Translation:CreateNode("Keyboard."..k, v);
-    end;
+    end;]]
   end;
   do
     -- ~ Gamepad input aliases
@@ -508,7 +508,7 @@ CreateInputState = function(source, meta)
       return Edge.TouchTap(a,p,meta);
     end);
   end;
-  local iBind = Event.new "InstantEvent"
+  local iBind = Event.new()
   if not meta then
     InputCache[source] = ni;
   else
@@ -687,7 +687,7 @@ end;
 function ActionClass:SetFlag(flag, value)
   if flag == 'User' then
     value = (not not value) or nil;
-    IntentService:FireIntent("SetUserAction", self, value or false);
+    IntentService:Fire("SetUserAction", self, value or false);
     UserActions[self] = value;
   else
     return error(
