@@ -550,6 +550,9 @@ UISEdge = function(i,p,m)
     sType = 'Application';
     sName = 'Focus';
   end;
+  if not (sName and sType and InputSources[sType]) then return end;
+  -- Escape if there's a new input type which is unsupported
+  -- Ex. TextInput
   local source = InputSources[sType][sName];
   if not source then return end;
   local vType = LinkedTypes[source];
