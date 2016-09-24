@@ -18,7 +18,7 @@ Clear = (Location, Name) ->
     .Parent = game.ReplicatedFirst
   print "[Freya] Unpacking ReplicatedFirst:"
   for v in *@Core.ReplicatedFirst\GetChildren!
-    print "*", v.Name
+    print "[Freya] *", v.Name
     v.Parent = RFFreya
     if v\IsA "Script"
       v.Disabled = true
@@ -34,7 +34,7 @@ Clear = (Location, Name) ->
     .Parent = game.ServerScriptService
   print "[Freya] Unpacking ServerScriptService:"
   for v in *@Core.ServerScriptService\GetChildren!
-    print "*", v.Name
+    print "[Freya] *", v.Name
     v.Parent = SSSFreya
     if v\IsA "Script"
       v.Disabled = true
@@ -51,7 +51,7 @@ Clear = (Location, Name) ->
     .Parent = game.StarterPlayer.StarterPlayerScripts
   print "[Freya] Unpacking StarterPlayerScripts:"
   for v in *@Core.StarterPlayerScripts\GetChildren!
-    print "*", v.Name
+    print "[Freya] *", v.Name
     v.Parent = SPSFreya
     if v\IsA "Script"
       v.Disabled = true
