@@ -1,15 +1,15 @@
-pow2 = setmetatable({[0] = 1,2,4,8,16,32,64,128,256},{__index = function(t,k)
+pow2 = setmetatable({[-1] = 0, [0] = 1,2,4,8,16,32,64,128,256},{__index = function(t,k)
   local v = 2^k
   table.insert(t,k,v)
   return v
-end});
+end}); -- -1 is not 0, but for ease...
 
 function lsh(value,shift) -- Left Shift
 	return (value*pow2[shift]) % 256
 end
 
 function rsh(value,shift) -- Right shift
-	return math.floor(value/2^shift) % 256
+	return math.floor(value/pow2[shift]) % 256
 end
 
 function bit(x,b) -- Select single bit
@@ -54,9 +54,27 @@ local function bitRange(str, beginBit, endBit)
             end
         end
     end
-
     return bits
 end
+
+local function bitRangeN(str, beginBit, endBit)
+  local beginChar = math.ceil( beginBit/8 )
+  local endChar = math.ceil( endBit/8 )
+  local range = str:sub( beginChar, endChar )
+  
+  local bytes = {range:bytes()};
+  local n = 0;
+  local c = 0;
+  for i=#bytes, 1, -1 do
+    n = n + bytes[i]*pow2[c*8]
+    c = c + 1
+  end
+  local fir = bytes[1]
+  n = n - bytes[#bytes]%pow2[endBit%8] - (fir - fir%pow2[8-beginBit%8]) - pow2[endChar*8-endBit-1];
+end
+
+-- 10010000
+-- 12345678
 
 local base64chars = { [0] =
    'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P',
@@ -90,4 +108,7 @@ end
 return {
   b64 = enc64;
   unb64 = dec64;
+  GetBit = bit;
+  GetRangeField = bitRange;
+  GetRange = bitRangeN;
 };
