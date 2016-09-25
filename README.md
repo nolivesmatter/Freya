@@ -4,31 +4,22 @@ Freya is a framework and template for developing with Roblox. Everything which F
 
 ## Features
 
-- BaseLib libraries
-- Intents
-- Custom Events
-- Input
-- Admin
-- Permissions
-- Colour palettes
-- Extended type support
-- Tween library
-- `os.time` and `tick` parser.
-- Translations support
-- General utility
-- Moonscript-optimized interfaces
-- Valkyrie support
+- [Extended Events](https://docs.crescentcode.net/Freya/Components/Events)
+- [All-to-all networkable signals](https://docs.crescentcode.net/Freya/Components/Intents)
+- [Powerful permissions](https://docs.cresentcode.net/Freya/Components/Permissions)
+- [Stateful Input](https://docs.crescentcode.net/Freya/Components/Input)
+- [Valkyrie](https://valkyrie.crescentcode.net/) support
+- [Package management](https://docs.crescentcode.net/Freya/Core/Hearth)
+- Magical seamless wrappers ([BaseLib](https://docs.crescentcode.net/Freya/Libraries) and [LiteLib](https://docs.crescentcode.net/Freya/LiteLibraries))
 
 ### Planned features
 
 - Nevermore compatibility
-- Networking management
-- Player loading management
-- Passive game rules
-- Cancelable behaviour
-- Extended Instance behaviour and management.
-- LiteLib libraries
-- OOP
+- Extended networking management
+- Extended serialization/deserialization
+- Freya package repository
+- Extended game rules API
+- Freya standards
 
 ## Setting up Freya
 
@@ -38,9 +29,13 @@ Currently, adding Freya to your game is simple: Because there are no branches to
 
 ### Configuring Freya
 
-All active modules will have a BoolValue in them called `Enabled`. Ticking the checkbox in it will enable the module and it will load and run automatically, providing control through the configuration, and providing API through Intents as IPCs.
+All active modules will have a BoolValue in them called `Enabled`. Ticking the checkbox in it will enable the module and it will load and run automatically, providing control through the configuration, and providing API through Intents.
 
 All passive modules can be loaded via the main Freya controller, or by requiring them manually. Their settings are handled via `Freya.Settings` in the relevant section.
+
+### Uninstalling Freya
+
+Didn't like Freya? That's a shame. You can currently find a small uninstalling script in `game.ServerStorage.Freya.vanish`, which should completely clear Freya from your game. It will not retain any Freya settings, and if you need to install Freya again you'll have to install it from scratch.
 
 ## Why use Freya?
 
