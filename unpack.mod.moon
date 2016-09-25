@@ -149,4 +149,5 @@ Clear = (Location, Name) ->
     .Parent = RSFreya
   @Version.Parent = SSFreya
   @PackageList.Parent = SSFreya
+  @vanish.Parent = SSFreya
   print "[Freya] Finished unpacking Freya"
