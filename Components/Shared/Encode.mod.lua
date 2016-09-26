@@ -57,21 +57,27 @@ local function bitRange(str, beginBit, endBit)
     return bits
 end
 
-local function bitRangeN(str, beginBit, endBit)
-  local beginChar = math.ceil( beginBit/8 )
-  local endChar = math.ceil( endBit/8 )
-  local range = str:sub( beginChar, endChar )
-  
-  local bytes = {range:bytes()};
-  local n = 0;
-  local c = 0;
-  for i=#bytes, 1, -1 do
-    n = n + bytes[i]*pow2[c*8]
-    c = c + 1
-  end
-  local fir = bytes[1]
-  n = n - bytes[#bytes]%pow2[endBit%8] - (fir - fir%pow2[8-beginBit%8]) - pow2[endChar*8-endBit-1];
+local function GetBits(integer, idx, n)
+  return math.floor(integer / 2^idx) % 2^n
 end
+
+local function getRangeN(str, idxStart, idxEnd)
+  idxStart = idxStart - 1;
+  idxEnd = idxEnd - 1;
+  local firstChar = math.floor(idxStart/8) + 1
+  local lastChar = math.floor(idxEnd/8) + 1
+  local relStartIdx = idxStart % 8
+  local numBits = idxEnd - idxStart + 1
+ 
+  local sum = 0
+  for p = firstChar, lastChar do
+    sum = sum + str:sub(p, p):byte()
+    if p ~= lastChar then sum = sum * 2^8 end
+  end
+
+  return GetBits(sum, (lastChar - firstChar + 1)*8 - numBits - relStartIdx, numBits)
+end
+
 
 -- 10010000
 -- 12345678
