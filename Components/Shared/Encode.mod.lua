@@ -19,7 +19,7 @@ end
 -- logic OR for number values
 function lor(x,y)
 	result = 0
-	for p=1,8 do result = result + (((bit(x,p) or bit(y,p)) == true) and 2^(p-1) or 0) end
+	for p=1,8 do result = result + (((bit(x,p) or bit(y,p)) == true) and pow2[p-1] or 0) end
 	return result
 end
 
@@ -58,7 +58,7 @@ local function bitRange(str, beginBit, endBit)
 end
 
 local function GetBits(integer, idx, n)
-  return math.floor(integer / 2^idx) % 2^n
+  return math.floor(integer / pow2[idx]) % pow2[n]
 end
 
 local function getRangeN(str, idxStart, idxEnd)
@@ -71,8 +71,8 @@ local function getRangeN(str, idxStart, idxEnd)
  
   local sum = 0
   for p = firstChar, lastChar do
-    sum = sum + str:sub(p, p):byte()
-    if p ~= lastChar then sum = sum * 2^8 end
+    sum = sum * 2^8
+    sum = sum + str:byte(p,p)
   end
 
   return GetBits(sum, (lastChar - firstChar + 1)*8 - numBits - relStartIdx, numBits)
