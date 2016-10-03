@@ -29,6 +29,11 @@ for k,v in next, script.Parent:GetChildren() do
     end
   end
 end
+for k,v in next, game.ServerScriptService.FreyaUserscripts:GetChildren() do
+  if v:FindFirstChild("Enabled") and v.Enabled.Value then
+    loadtable[#loadtable+1] = v;
+  end
+end
 table.sort(loadtable, function(a,b)
   local loada = a:FindFirstChild("LoadOrder")
   loada = loada and loada.Value or 1
