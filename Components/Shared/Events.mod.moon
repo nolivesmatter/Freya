@@ -51,7 +51,7 @@ eClass = {
       ar = Hold[@]
       f unpack ar, 1, ar.n
   wait: =>
-    Events[@]\wait!
+    Events[@].Event\wait!
     ar = Hold[@]
     unpack ar, 1, ar.n
   intercept: (f) =>
