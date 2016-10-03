@@ -20,7 +20,6 @@ IsInstance = do
     s,e = pcall gs, game, o
     return s and not e
   
-
 Components = {}
 
 for v in *game.ReplicatedStorage.Freya.Components.Shared\GetChildren!
@@ -45,7 +44,7 @@ Controller = with {
       if Components[ComponentName]
         warn "[WARN][Freya Server] Overwriting component #{ComponentName}"
       Components[ComponentName] = ComponentValue
-      ComponentAdded\fire!
+      ComponentAdded\Fire ComponentName
   }
   .GetService = .GetComponent
   .SetService = .SetComponent
