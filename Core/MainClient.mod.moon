@@ -24,12 +24,17 @@ IsInstance = do
 Components = {}
 
 with game.ReplicatedStorage.Freya.Components
+  \WaitForChild "Events"
   for v in *.Shared\GetChildren!
     Components[v.Name] = require v
   for v in *.Client\GetChildren!
     Components[v.Name] = require v
 
 ComponentAdded = Components.Events.new!
+
+game.ReplicatedStorage.Freya.Components.DescendantAdded\connect (obj) ->
+  Components[obj.Name] = require obj;
+  ComponentAdded\Fire obj.Name
 
 Controller = with {
     GetComponent: Hybrid (ComponentName) ->
@@ -38,14 +43,14 @@ Controller = with {
         if IsInstance(component)
           component = require component
         return component
-      warn "[WARN][Freya Server] Yielding for #{ComponentName}"
+      warn "[WARN][Freya Client] Yielding for #{ComponentName}"
       while ComponentAdded\wait! ~= ComponentName do nothing
       return Components[ComponentName]
     SetComponent: Hybrid (ComponentName, ComponentValue) ->
       if Components[ComponentName]
-        warn "[WARN][Freya Server] Overwriting component #{ComponentName}"
+        warn "[WARN][Freya Client] Overwriting component #{ComponentName}"
       Components[ComponentName] = ComponentValue
-      ComponentAdded\fire!
+      ComponentAdded\Fire ComponentName
   }
   .GetService = .GetComponent
   .SetService = .SetComponent
@@ -54,7 +59,7 @@ Controller = with {
 
 with getmetatable ni
   .__index = Controller
-  .__tostring = -> "Freya Server Controller"
-  .__metatable = "Locked metatable: Freya Server"
+  .__tostring = -> "Freya Client Controller"
+  .__metatable = "Locked metatable: Freya Client"
   
 return ni
