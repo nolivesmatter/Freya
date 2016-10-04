@@ -31,6 +31,14 @@ for k,v in next, script.Parent:GetChildren() do
     end
   end
 end
+for k,v in next, game.ReplicatedFirst.FreyaUserscripts:GetChildren() do
+  if v:IsA("LocalScript") and v.Enabled.Value then
+    if v:FindFirstChild("LoadOrder") and v.LoadOrder.Value == -1 then else
+      -- Lazy negation
+      rflist[#rflist+1] = v;
+    end
+  end
+end
 table.sort(rflist, function(a,b)
   local loada = a:FindFirstChild("LoadOrder")
   loada = loada and loada.Value or 1
