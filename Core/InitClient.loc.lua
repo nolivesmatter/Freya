@@ -15,6 +15,13 @@ for k,v in next, script.Parent:GetChildren() do
     end
   end
 end
+for k,v in next, game.ReplicatedFirst:WaitForChild("FreyaUserscripts"):GetChildren() do
+  if v:IsA("LocalScript") and v.Enabled.Value then
+    if v:FindFirstChild("LoadOrder") and v.LoadOrder.Value == -1 then
+      v.Disabled = false;
+    end
+  end
+end
 
 -- Get our Freya Main
 local Freya = require(game.ReplicatedStorage:WaitForChild("Freya"):WaitForChild("Main"));
