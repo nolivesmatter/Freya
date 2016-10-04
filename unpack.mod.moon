@@ -16,6 +16,9 @@ Clear = (Location, Name) ->
   RFFreya = with Instance.new "Folder"
     .Name = "Freya"
     .Parent = game.ReplicatedFirst
+  with Instance.new "Folder"
+    .Name = "FreyaUserscripts"
+    .Parent = game.ReplicatedFirst
   print "[Freya] Unpacking ReplicatedFirst:"
   for v in *@Core.ReplicatedFirst\GetChildren!
     print "[Freya] *", v.Name
@@ -31,6 +34,9 @@ Clear = (Location, Name) ->
   Clear game.ServerScriptService, "Freya"
   SSSFreya = with Instance.new "Folder"
     .Name = "Freya"
+    .Parent = game.ServerScriptService
+  with Instance.new "Folder"
+    .Name = "FreyaUserscripts"
     .Parent = game.ServerScriptService
   print "[Freya] Unpacking ServerScriptService:"
   for v in *@Core.ServerScriptService\GetChildren!
@@ -48,6 +54,9 @@ Clear = (Location, Name) ->
   Clear game.StarterPlayer.StarterPlayerScripts, "Freya"
   SPSFreya = with Instance.new "Folder"
     .Name = "Freya"
+    .Parent = game.StarterPlayer.StarterPlayerScripts
+  with Instance.new "Folder"
+    .Name = "FreyaUserscripts"
     .Parent = game.StarterPlayer.StarterPlayerScripts
   print "[Freya] Unpacking StarterPlayerScripts:"
   for v in *@Core.StarterPlayerScripts\GetChildren!
