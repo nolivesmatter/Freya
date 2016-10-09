@@ -89,7 +89,7 @@ local base64chars = { [0] =
    'w','x','y','z','0','1','2','3','4','5','6','7','8','9','+','/',
 }
 
-function enc64(data)
+local function enc64(data)
 	local bytes = {}
 	local result = ""
 	for spos=0,string.len(data)-1,3 do
@@ -101,7 +101,7 @@ end
 
 local base64bytes = {['A']=0,['B']=1,['C']=2,['D']=3,['E']=4,['F']=5,['G']=6,['H']=7,['I']=8,['J']=9,['K']=10,['L']=11,['M']=12,['N']=13,['O']=14,['P']=15,['Q']=16,['R']=17,['S']=18,['T']=19,['U']=20,['V']=21,['W']=22,['X']=23,['Y']=24,['Z']=25,['a']=26,['b']=27,['c']=28,['d']=29,['e']=30,['f']=31,['g']=32,['h']=33,['i']=34,['j']=35,['k']=36,['l']=37,['m']=38,['n']=39,['o']=40,['p']=41,['q']=42,['r']=43,['s']=44,['t']=45,['u']=46,['v']=47,['w']=48,['x']=49,['y']=50,['z']=51,['0']=52,['1']=53,['2']=54,['3']=55,['4']=56,['5']=57,['6']=58,['7']=59,['8']=60,['9']=61,['-']=62,['_']=63,['=']=nil}
 
-function dec64(...)
+local function dec64(...)
 	data = Hybrid(...)
 	local chars = {}
 	local result=""
@@ -112,11 +112,131 @@ function dec64(...)
 	return result
 end
 
+local data = setmetatable({},{__mode = 'k'});
+
+local BitMt = {
+  __index = {
+    toB64 = function(t)
+      if not data[t] then
+        return error("toB64 was not called as a method!", 2);
+      end;
+      t = data[t];
+      return enc64(t.data .. t.cache)
+    end;
+    toFieldEncoded = function(t)
+      local data = data[t];
+      if not data then
+        return error("toFieldEncoded was not called as a method!", 2);
+      end
+      return FieldEncode(t.data .. t.cache);
+    end;
+  };
+  __tostring = function(t)
+    t = data[t];
+    return t.data .. t.cached;
+  end;
+  __add = function(lhs, rhs) -- B|AND
+    if type(lhs) == 'string' then
+      -- RHS is BitStream
+    elseif type(rhs) == 'string' then
+      -- LHS is BitStream
+    elseif data[lhs] and data[rhs] then
+      -- Both are BitStream
+    else
+      return error("Attempt to add BitStream with incompatible type");
+    end
+  end;
+  __unm = function(stream) -- B|NOT
+    
+  end;
+  __sub = function(lhs, rhs) -- B|NAND
+    if type(lhs) == 'string' then
+      -- RHS is BitStream
+    elseif type(rhs) == 'string' then
+      -- LHS is BitStream
+    elseif data[lhs] and data[rhs] then
+      -- Both are BitStream
+    else
+      return error("Attempt to subtract BitStream from incompatible type");
+    end
+  end;
+  __mul = function(lhs, rhs) -- B|OR
+    if type(lhs) == 'string' then
+      -- RHS is BitStream
+    elseif type(rhs) == 'string' then
+      -- LHS is BitStream
+    elseif data[lhs] and data[rhs] then
+      -- Both are BitStream
+    else
+      return error("Attempt to multiply BitStream with incompatible type");
+    end
+  end;
+  __div = function(lhs, rhs) -- B|NOR
+    if type(lhs) == 'string' then
+      -- RHS is BitStream
+    elseif type(rhs) == 'string' then
+      -- LHS is BitStream
+    elseif data[lhs] and data[rhs] then
+      -- Both are BitStream
+    else
+      return error("Attempt to divide BitStream with incompatible type");
+    end
+  end;
+  __mod = function(lhs, rhs) -- B|XOR
+    if type(lhs) == 'string' then
+      -- RHS is BitStream
+    elseif type(rhs) == 'string' then
+      -- LHS is BitStream
+    elseif data[lhs] and data[rhs] then
+      -- Both are BitStream
+    else
+      return error("Attempt to mod BitStream with incompatible type");
+    end
+  end;
+  __concat = function(lhs, rhs) -- Concat data.
+    if type(lhs) == 'string' then
+      -- RHS is BitStream
+    elseif type(rhs) == 'string' then
+      -- LHS is BitStream
+    elseif data[lhs] and data[rhs] then
+      -- Both are BitStream
+    else
+      return error("Attempt to concatenate BitStream with incompatible type");
+    end
+  end;
+  __len = function(t)
+    t = data[t];
+    return #(t.data)*8 + t.hanging
+  end;
+  __metatable = "Locked metatable: Freya bitstream"
+};
+
+local new = function(raw) 
+  if data[raw] then return raw end;
+  if type(raw) ~= 'string' then
+    return error("Invalid bit data", 3);
+  end;
+	local ni = newproxy(true);
+  data[ni] = {
+    data = raw;
+    hanging = 0;
+    cached = '';
+  };
+  local mt = getmetatable(ni);
+  for e,m in next, BitMt do
+    mt[e] = m;
+  end;
+  return ni;
+end;
+
 local Controller = {
-  fromB64 = dec64; -- Wrap as a BitStream later
-  new = function(stub) end; -- Create a BitStream object later.
-  -- Should allow for optimisation of bitwise operations.
-  -- Note, use ee5 b64 and port for pure Lua 5.1
+  fromB64 = function(...) return new(dec64(...)) end; -- Wrap as a BitStream later
+  new = function(...)
+    return new(Hybrid(...));
+  end;
+  fromFieldEncoded = function(...)
+    return new(FieldDecode(Hybrid(...)));
+  end;
 };
 local ni = newproxy(true);
 local mt = getmetatable(ni);
