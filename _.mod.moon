@@ -22,7 +22,7 @@ if not script\FindFirstChild "Version"
 if not script\FindFirstChild "PackageList"
   with Instance.new "ModuleScript"
     .Name = "PackageList"
-    .Source = "--[==[[]]==]"
+    .Source = "return {}"
     .Parent = script
 
 Freya = game.ServerStorage\FindFirstChild "Freya"
@@ -30,17 +30,21 @@ if Freya
   -- Check Freya version
   Version = Freya\FindFirstChild "Version"
   if Version and Version.Value != script.Version.Value
-    -- Update Freya
+    --// Update Freya
     print "[Freya] Updating Freya to " .. script.Version.Value
     script.PackageList\Destroy!
     Freya.PackageList.Parent = script
-    Packages = script.PackageList.Source\sub(7,-5)\gsub('^%s+','')\gsub('%s+$','')
+    Packages = require script.PackageList
+    --// Preserve Packages
+    for Package in *Packages
+      print "[Freya] Preserving #{Package.Origin.Name}"
+      Package.Resource.Parent = nil
+    --// Update Freya
     require(script.unpack) script
-    -- Reinstall packages
-    FreyaStudio = require Freya.FreyaStudio
-    Packages = JSONDecode Packages
-    for v in *Packages
-      FreyaStudio.Install v.Package, v.Version
+    --// Restore packages
+    for Package in *Packages
+      Package.Resource.Parent = Locate Package.Origin.Type
+      print "[Freya] Restoring #{Package.Origin.Name}"
 
   FreyaStudio = Freya.FreyaStudio
 else
