@@ -125,6 +125,7 @@ Hearth = {
         2
       if .Uninstall then .Uninstall ipkg
       ipkg\Destroy!
+  :Locate
 }
 
 with getmetatable ni
