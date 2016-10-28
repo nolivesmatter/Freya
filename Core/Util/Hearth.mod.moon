@@ -20,7 +20,26 @@ Locate = (Type) ->
     when 'LiteLibrary' then game.ReplicatedStorage.Freya.LiteLibraries
     when 'Util' then game.ServerStorage.Freya.Util
     else error "Invalid Type for package!", 3
-
+    
+PackageModule = script.Parent.Parent.PackageList
+Packages = require PackageModule
+Flush = ->
+  PackageModule\Destroy!
+  Buffer = {'{'}
+  for Package in *Packages
+    Buffer[#Buffer+1] = "{
+Resource = #{Package.Resource\GetFullName!\gsub '^([^%.%[]+)', 'game:GetService(\'%1\')'};
+Origin = {
+  Name = '#{Package.Origin.Name}';
+  Type = '#{Package.Origin.Type}';
+}
+};
+"
+  Buffer[#Buffer+1] = '}'
+  PackageModule = with Instance.new("ModuleScript")
+    .Source = table.concat Buffer, ''
+    .Name = 'PackageList'
+    .Parent = script.Parent.Parent
 Hearth = {
   InstallPackage: Hybrid (Package) ->
     apkg = Package
@@ -61,6 +80,15 @@ Hearth = {
             .Name = "LoadOrder"
             .Value = lo
             .Parent = pak
+      sav = {
+        Resource: .Package
+        Origin:
+          Name: .Name or .Package.Name
+          Type: .Type
+      }
+      Packages[#Packages+1] = sav
+      Flush!
+      return sav
   UpdatePackage: Hybrid (Package) ->
     apkg = Package
     -- Verify the Package is a proper package
@@ -81,23 +109,36 @@ Hearth = {
         assert .Package,
           "Package origin is invalid.",
           2
-        pkgloc = Locate .Type
-        opkg = pkgloc\FindFirstChild .Package.Name
-        assert opkg,
-          "Nothing to update from - Package was not already present",
-          2
-        if .Update then .Update opkg, .Package
-        opkg\Destroy!
-        .Package.Parent = pkgloc
-        if .Package\IsA "Script"
-        -- Sort out other package metadata for Scripts
-          pak = .Package
-          if .LoadOrder
-            lo = .LoadOrder
-            with Instance.new "IntValue"
-              .Name = "LoadOrder"
-              .Value = lo
-              .Parent = pak
+      pkgloc = Locate .Type
+      opkg = pkgloc\FindFirstChild .Package.Name
+      assert opkg,
+        "Nothing to update from - Package was not already present",
+        2
+      if .Update then .Update opkg, .Package
+      opkg\Destroy!
+      .Package.Parent = pkgloc
+      if .Package\IsA "Script"
+      -- Sort out other package metadata for Scripts
+        pak = .Package
+        if .LoadOrder
+          lo = .LoadOrder
+          with Instance.new "IntValue"
+            .Name = "LoadOrder"
+            .Value = lo
+            .Parent = pak
+      sav = {
+        Resource: .Package
+        Origin:
+          Name: .Name or .Package.Name
+          Type: .Type
+      }
+      for pak in *Packages
+        if pak.Origin.Name == sav.Origin.Name
+        pak.Resource = sav.Resource
+        sav = pak
+        break
+      Flush!
+      return sav
   UninstallPackage: Hybrid (Package) ->
     apkg = Package
     -- Verify the Package is a proper package
@@ -125,7 +166,19 @@ Hearth = {
         2
       if .Uninstall then .Uninstall ipkg
       ipkg\Destroy!
-  :Locate
+      dest = false
+      for i=1, #Packages
+        v = Packages[i]
+        if dest
+          Packages[i-1] = v
+          Packages[i] = nil
+        elseif v.Origin.Name == (.Name or .Package.Name)
+          dest = true
+          Packages[i] = nil
+      Flush!
+  Locate: Hybrid Locate
+  Flush: Hybrid Flush
+  :Packages
 }
 
 with getmetatable ni
