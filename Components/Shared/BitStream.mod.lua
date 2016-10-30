@@ -68,7 +68,7 @@ local function getRangeN(str, idxStart, idxEnd)
   local lastChar = math.floor(idxEnd/8) + 1
   local relStartIdx = idxStart % 8
   local numBits = idxEnd - idxStart + 1
- 
+
   local sum = 0
   for p = firstChar, lastChar do
     sum = sum * 2^8
@@ -102,7 +102,7 @@ end
 local base64bytes = {['A']=0,['B']=1,['C']=2,['D']=3,['E']=4,['F']=5,['G']=6,['H']=7,['I']=8,['J']=9,['K']=10,['L']=11,['M']=12,['N']=13,['O']=14,['P']=15,['Q']=16,['R']=17,['S']=18,['T']=19,['U']=20,['V']=21,['W']=22,['X']=23,['Y']=24,['Z']=25,['a']=26,['b']=27,['c']=28,['d']=29,['e']=30,['f']=31,['g']=32,['h']=33,['i']=34,['j']=35,['k']=36,['l']=37,['m']=38,['n']=39,['o']=40,['p']=41,['q']=42,['r']=43,['s']=44,['t']=45,['u']=46,['v']=47,['w']=48,['x']=49,['y']=50,['z']=51,['0']=52,['1']=53,['2']=54,['3']=55,['4']=56,['5']=57,['6']=58,['7']=59,['8']=60,['9']=61,['-']=62,['_']=63,['=']=nil}
 
 local function dec64(...)
-	data = Hybrid(...)
+	local data = Hybrid(...)
 	local chars = {}
 	local result=""
 	for dpos=0,string.len(data)-1,4 do
@@ -111,6 +111,46 @@ local function dec64(...)
 	end
 	return result
 end
+
+local function FieldEncode(...)
+  local data = Hybrid(...)
+  local tmp = {}
+  local _byte = 1
+  local _cnt = 1
+  data = data:gsub('[\000\254]', function(s)
+    if s == '\0' then
+      _byte = _byte + pow2[_cnt]
+    end;
+    _cnt = _cnt + 1
+    if _cnt == 8 then
+      _cnt = 1
+      tmp[#tmp+1] = string.char(_byte)
+    end;
+    return '\254'
+  end);
+  if _cnt > 1 then
+    tmp[#tmp+1] = string.char(_byte)
+  end
+  return table.concat(tmp,'') .. data
+end;
+
+local function FieldDecode(...)
+  local data = Hybrid(...)
+  local count = #data:gsub('[^\254]','');
+  local bytecount = math.ceil(count/7); -- Yes, 7.
+  local bits = bitRange(data, 1, bytecount);
+  local _cnt = 1;
+  data = data:gsub('\254', function(s)
+    return bits[_cnt] and '\0' or '\254'
+    if _cnt % 8 == 7 then
+      _cnt = _cnt + 2
+    else
+      _cnt = _cnt + 1
+    end;
+  end);
+  return data
+end;
+
 
 local data = setmetatable({},{__mode = 'k'});
 
@@ -147,7 +187,7 @@ local BitMt = {
     end
   end;
   __unm = function(stream) -- B|NOT
-    
+
   end;
   __sub = function(lhs, rhs) -- B|NAND
     if type(lhs) == 'string' then
@@ -211,7 +251,7 @@ local BitMt = {
   __metatable = "Locked metatable: Freya bitstream"
 };
 
-local new = function(raw) 
+local new = function(raw)
   if data[raw] then return raw end;
   if type(raw) ~= 'string' then
     return error("Invalid bit data", 3);
