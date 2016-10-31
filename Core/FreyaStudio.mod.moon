@@ -6,7 +6,7 @@ ni = newproxy true
 Hybrid = (f) -> (...) ->
   return f select 2, ... if ... == ni else f ...
   
-Hearth = require game.ServerStorage.Freya.Util.Hearth
+Hearth = require script.Parent.Util.Hearth
 
 Controller = with {
     InstallPackage: Hybrid (Package, Version) ->
