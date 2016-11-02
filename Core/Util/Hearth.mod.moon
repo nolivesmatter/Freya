@@ -140,14 +140,12 @@ Hearth = {
       assert .Type,
         "[Error][Freya Hearth] Package file does not include a valid type for the package.",
         2
-      unless .Package
-        assert .Name,
-          "[Error][Freya Hearth] Package has no name or package origin.",
-          2
-        .Package = apkg\FindFirstChild Name
-        assert .Package,
-          "[Error][Freya Hearth] Package origin is invalid.",
-          2
+      assert .Package,
+        "[Error][Freya Hearth] Package origin is invalid.",
+        2
+      unless .Name
+        .Name = .Package.Name
+      pkgloc = Locate .Type
       unless .Version
         warn "[Warn][Freya Hearth] No package version. Treating the package as version 1"
         .Version = 'initial.0'
@@ -213,14 +211,11 @@ Hearth = {
       assert .Type,
         "[Error][Freya Hearth] Package file does not include a valid type for the package.",
         2
-      unless .Package
-        assert .Name,
-          "[Error][Freya Hearth] Package has no name or package origin.",
-          2
-        .Package = apkg\FindFirstChild Name
-        assert .Package,
-          "[Error][Freya Hearth] Package origin is invalid.",
-          2
+      assert .Package,
+        "[Error][Freya Hearth] Package origin is invalid.",
+        2
+      unless .Name
+        .Name = .Package.Name
       pkgloc = Locate .Type
       opkg = pkgloc\FindFirstChild .Package.Name
       assert opkg,
@@ -286,14 +281,12 @@ Hearth = {
       assert .Type,
         "[Error][Freya Hearth] Package file does not include a valid type for the package.",
         2
+      assert .Package,
+        "[Error][Freya Hearth] Package origin is invalid.",
+        2
       unless .Name
-        assert .Package,
-          "[Error][Freya Hearth] Package has no name or package origin.",
-          2
         .Name = .Package.Name
-        assert .Name ~= '',
-          "[Error][Freya Hearth] Package origin is invalid.",
-          2
+      pkgloc = Locate .Type
       ipkgloc = Locate .Type
       ipkg = ipkgloc\FindFirstChild .Name
       assert ipkg,
