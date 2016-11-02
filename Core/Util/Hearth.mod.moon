@@ -5,7 +5,7 @@
 
 ni = newproxy true
 
-local InstallPackage, UpdatePackage, UninstallPackage
+local InstallPackage, UpdatePackage, UninstallPackage, GetPackage
 
 Hybrid = (f) -> (...) ->
   return f select 2, ... if ... == ni else f ...
@@ -135,35 +135,53 @@ Hearth = {
     apkg = Package
     -- Resolve the package
     Package, err = ResolvePackage Package
-    return error "Unable to install package: #{err}", 2 unless Package
+    return error "[Error][Freya Hearth] Unable to install package: \"#{err}\"", 2 unless Package
     with Package
       assert .Type,
-        "Package file does not include a valid type for the package.",
+        "[Error][Freya Hearth] Package file does not include a valid type for the package.",
         2
       unless .Package
         assert .Name,
-          "Package has no name or package origin.",
+          "[Error][Freya Hearth] Package has no name or package origin.",
           2
         .Package = apkg\FindFirstChild Name
         assert .Package,
-          "Package origin is invalid.",
+          "[Error][Freya Hearth] Package origin is invalid.",
           2
       unless .Version
-        warn "No package version. Treating the package as version 1"
+        warn "[Warn][Freya Hearth] No package version. Treating the package as version 1"
         .Version = 'initial.0'
       if .Depends
         for dep in *.Depends
+          -- Origin
+          -- Name
+          -- Version
+          return error "[Error][Freya Hearth] Malformed dependency list" unless 
           pak = GetPackage dep.Name
-          if pak
+          if pak -- If it's installed
             if dep.Version
               -- Check that the version is alright
               clear = CompareVersions dep.Version, pak.Version
+              unless clear -- Failed dep version
+                warn "[Warn][Freya Hearth] Incomplete dependency #{dep.Name} #{dep.Version}. Attempting to install."
+                s, err = pcall InstallPackage dep.Origin or dep.Name, dep.Version
+                return error "[Error][Freya Hearth] Failed to install dependency #{dep.Name} #{dep.Version} because \"#{err}\"", 2 unless s
+                print "[Info][Freya Hearth] Installed dependency #{dep.Name} #{dep.Version}"
+            else
+              warn "[Warn][Freya Hearth] dependency #{dep.Name} has no version specified. Be warned that it may not function."
+              -- No need to install anything else.
+          else
+            -- Try to install the package.
+            warn "[Warn][Freya Hearth] Missing dependency #{dep.Name} #{dep.Version or 'latest'}. Attempting to install."
+            s, err = pcall InstallPackage dep.Origin or dep.Name, dep.Version
+            return error "[Error][Freya Hearth] Failed to install dependency #{dep.Name} #{dep.Version} because \"#{err}\"", 2 unless s
+            print "[Info][Freya Hearth] Installed dependency #{dep.Name} #{dep.Version or 'latest'}"
       pkgloc = Locate .Type
       opkg = pkgloc\FindFirstChild .Package.Name
       if opkg
         if .Update and force 
           .Update opkg, .Package
-          warn "[Warn][Freya] Updating #{.Name or .Package.Name} before an install."
+          warn "[Warn][Freya Hearth] Updating #{.Name or .Package.Name} before an install."
         opkg\Destroy!
       .Package.Parent = pkgloc
       if .Install then .Install .Package
@@ -188,29 +206,51 @@ Hearth = {
       return sav
   UpdatePackage: Hybrid (Package, Version) ->
     apkg = Package
-    -- Verify the Package is a proper package
-    if type(Package) == 'userdata'
-      Package = require Package -- Assume ModuleScript.
-      -- God forbid should it be anything else.
-    if type(Package) ~= 'table'
-      error "Invalid package file for Hearth!", 2
+    -- Resolve the package
+    Package, err = ResolvePackage Package
+    return error "[Error][Freya Hearth] Unable to update package: \"#{err}\"", 2 unless Package
     with Package
       assert .Type,
-        "Package file does not include a valid type for the package.",
+        "[Error][Freya Hearth] Package file does not include a valid type for the package.",
         2
       unless .Package
         assert .Name,
-          "Package has no name or package origin.",
+          "[Error][Freya Hearth] Package has no name or package origin.",
           2
         .Package = apkg\FindFirstChild Name
         assert .Package,
-          "Package origin is invalid.",
+          "[Error][Freya Hearth] Package origin is invalid.",
           2
       pkgloc = Locate .Type
       opkg = pkgloc\FindFirstChild .Package.Name
       assert opkg,
-        "Nothing to update from - Package was not already present",
+        "[Error][Freya Hearth] Nothing to update from - Package was not already present",
         2
+      if .Depends
+        for dep in *.Depends
+          -- Origin
+          -- Name
+          -- Version
+          return error "[Error][Freya Hearth] Malformed dependency list" unless 
+          pak = GetPackage dep.Name
+          if pak -- If it's installed
+            if dep.Version
+              -- Check that the version is alright
+              clear = CompareVersions dep.Version, pak.Version
+              unless clear -- Failed dep version
+                warn "[Warn][Freya Hearth] Incomplete dependency #{dep.Name} #{dep.Version}. Attempting to install."
+                s, err = pcall InstallPackage dep.Origin or dep.Name, dep.Version
+                return error "[Error][Freya Hearth] Failed to install dependency #{dep.Name} #{dep.Version} because \"#{err}\"", 2 unless s
+                print "[Info][Freya Hearth] Installed dependency #{dep.Name} #{dep.Version}"
+            else
+              warn "[Warn][Freya Hearth] dependency #{dep.Name} has no version specified. Be warned that it may not function."
+              -- No need to install anything else.
+          else
+            -- Try to install the package.
+            warn "[Warn][Freya Hearth] Missing dependency #{dep.Name} #{dep.Version or 'latest'}. Attempting to install."
+            s, err = pcall InstallPackage dep.Origin or dep.Name, dep.Version
+            return error "[Error][Freya Hearth] Failed to install dependency #{dep.Name} #{dep.Version} because \"#{err}\"", 2 unless s
+            print "[Info][Freya Hearth] Installed dependency #{dep.Name} #{dep.Version or 'latest'}"
       if .Update then .Update opkg, .Package
       opkg\Destroy!
       .Package.Parent = pkgloc
@@ -239,28 +279,25 @@ Hearth = {
       return sav
   UninstallPackage: Hybrid (Package) ->
     apkg = Package
-    -- Verify the Package is a proper package
-    if type(Package) == 'userdata'
-      Package = require Package -- Assume ModuleScript.
-      -- God forbid should it be anything else.
-    if type(Package) ~= 'table'
-      error "Invalid package file for Hearth!", 2
+    -- Resolve the package
+    Package, err = ResolvePackage Package
+    return error "[Error][Freya Hearth] Unable to install package: #{err}", 2 unless Package
     with Package
       assert .Type,
-        "Package file does not include a valid type for the package.",
+        "[Error][Freya Hearth] Package file does not include a valid type for the package.",
         2
       unless .Name
         assert .Package,
-          "Package has no name or package origin.",
+          "[Error][Freya Hearth] Package has no name or package origin.",
           2
         .Name = .Package.Name
         assert .Name ~= '',
-          "Package origin is invalid.",
+          "[Error][Freya Hearth] Package origin is invalid.",
           2
       ipkgloc = Locate .Type
       ipkg = ipkgloc\FindFirstChild .Name
       assert ipkg,
-        "Package could not be located",
+        "[Error][Freya Hearth] Package could not be located",
         2
       if .Uninstall then .Uninstall ipkg
       ipkg\Destroy!
@@ -284,7 +321,7 @@ Hearth = {
   :ResolvePackage
 }
 
-{:InstallPackage, :UninstallPackage, :UpdatePackage} = Hearth
+{:InstallPackage, :UninstallPackage, :UpdatePackage, :GetPackage} = Hearth
 
 with getmetatable ni
   .__index = Hearth
