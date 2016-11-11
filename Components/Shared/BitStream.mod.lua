@@ -1,3 +1,5 @@
+local Hybrid;
+
 pow2 = setmetatable({[-1] = 0, [0] = 1,2,4,8,16,32,64,128,256},{__index = function(t,k)
   local v = 2^k
   table.insert(t,k,v)
@@ -23,6 +25,7 @@ function lor(x,y)
 	return result
 end
 
+-- Credits to ZarsBranchkin
 local function bitRange(str, beginBit, endBit)
     local byte_t = { 1, 2, 4, 8, 16, 32, 64, 128 }
 
@@ -61,6 +64,7 @@ local function GetBits(integer, idx, n)
   return math.floor(integer / pow2[idx]) % pow2[n]
 end
 
+-- Credit to cntkillme
 local function getRangeN(str, idxStart, idxEnd)
   idxStart = idxStart - 1;
   idxEnd = idxEnd - 1;
@@ -82,6 +86,8 @@ end
 -- 10010000
 -- 12345678
 
+-- B64 from http://lua-users.org/wiki/BaseSixtyFour
+-- Not the fastest, but it works.
 local base64chars = { [0] =
    'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P',
    'Q','R','S','T','U','V','W','X','Y','Z','a','b','c','d','e','f',
@@ -124,6 +130,7 @@ local function FieldEncode(...)
     _cnt = _cnt + 1
     if _cnt == 8 then
       _cnt = 1
+      _byte = 1;
       tmp[#tmp+1] = string.char(_byte)
     end;
     return '\254'
@@ -141,12 +148,13 @@ local function FieldDecode(...)
   local bits = bitRange(data, 1, bytecount);
   local _cnt = 1;
   data = data:gsub('\254', function(s)
-    return bits[_cnt] and '\0' or '\254'
+    local ret = bits[_cnt] and '\0' or '\254'
     if _cnt % 8 == 7 then
       _cnt = _cnt + 2
     else
       _cnt = _cnt + 1
     end;
+    return ret
   end);
   return data
 end;
