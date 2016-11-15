@@ -23,6 +23,11 @@ ResolvableMt = {
   __metatable: "Locked Metatable: Freya"
 }
 
+resproxy = newproxy true
+with getmetatable resproxy
+  .__index = Resolvables
+  .__metatable = "Locked metatable: Freya"
+
 ErrorClassMt = {
   __index: (k) => ErrorData[@][k]
   __call: (j) => 
@@ -35,12 +40,63 @@ ErrorClassMt = {
   __metatable: "Locked Metatable: Freya"
 }
 
-TemplateClass = {
-
-}
+with TemplateClass = {
+    Create: (ErrorType, Data = {}) =>
+      tData = TemplateData[@]
+      assert tData,
+        "[Error][Freya Errors] (in Template.Create): You need to call this as a method.",
+        2
+      ErrorType and= tData.Category[ErrorType]
+      assert ErrorType,
+        "[Error][Freya Errors] (in Template.Create): Invalid error type for this template.",
+        2
+      newErr = newproxy true
+      _mt = getmetatable newErr
+      for e,m in pairs ErrorClassMt
+        _mt[e] = m
+      ErrorData[newErr] = Data
+      for k,v in pairs tData
+        Data[k] or= v
+      return newErr
+    Insert: (ID, Name, Message) =>
+      tData = TemplateData[@]
+      assert tData,
+        "[Error][Freya Errors] (in Template.Create): You need to call this as a method.",
+        2
+      cat = tData.Category
+      if Category[ID]
+        warn "[Warn][Freya Errors] (in Template.Insert): Error ##{ID} already exists. Replacing."
+      if Category[Name]
+        warn "[Warn][Freya Errors] (in Template.Insert): Error \"#{Name}\" already exists. Replacing."
+      newResolvable = newproxy true
+      cat[ID] = newResolvable
+      cat[Name] = newResolvable
+      cat[newResolvable] = newResolvable
+      ResolvableData[newResolvable] = {
+        ID: i
+        Name: Name
+        Message: Message
+        Origin: tData.Name
+      }
+      mt = getmetatable newResolvable
+      for e,m in pairs ResolvableMt
+        mt[e] = m
+      return newResolvable
+  }
+  .Error = (...) -> .Create(...)!
+  .Assert = Hybrid (condition, ...) -> 
+    return .Error(...) unless condition
+  .new = .Create
 
 TemplateClassMt = {
-
+  .__index: (k) =>
+    return switch k
+      when "ErrorTypes", "ErrorType", "Types"
+        TemplateData[@].Category
+      else
+        TemplateClass[k] or TemplateData[@][k]
+  .__tostring: => "Freya Error Template (#{@Category})"
+  .__metatable: "Locked metatable: Freya"
 }
 
 Error = with {
@@ -61,10 +117,49 @@ Error = with {
       -- It's not immutable how scary
       return newErr
     Template: Hybrid (Name, Errors, DefaultData) ->
-      -- New Templateplater
+      -- New Templateplate
       ni = newproxy true
+      warn "[Warn][Freya Errors] (in Template): No errors defined for #{Name}" unless Errors
+      Errors or= {}
+      warn "[Warn][Freya Errors] (in Template): No default data defined for #{Name}" unless DefaultData
+      DefaultData or= {}
+      -- Build resolvable tree inc/ proxies
+      -- Errors of format {... {string Name, string Error}}
+      newtree = newproxy true
+      res = {}
+      for i=1, #Errors
+        v = Errors[i]
+        newResolvable = newproxy true
+        res[i] = newResolvable
+        res[v[1]] = newResolvable
+        res[newResolvable] = newResolvable
+        ResolvableData[newResolvable] = {
+          ID: i
+          Name: v[1]
+          Message: v[2]
+          Origin: Name
+        }
+        mt = getmetatable newResolvable
+        for e,m in pairs ResolvableMt
+          mt[e] = m
       
-    :Resolvables
+      Resolvables[Name] = newtree
+      with getmetatable newtree
+        .__index = res
+        .__call = (const, last) => next res, last
+        .__metatable = "Locked metatable: Freya"
+        .__tostring = Name
+      
+      do
+        mt = getmetatable ni
+        for e,m in pairs TemplateMt
+          mt[e] = m
+      TemplateData[ni] = DefaultData
+      DefaultData.Name = Name
+      DefaultData.Category = newtree
+      
+      return ni
+    Resolvables: resproxy
   }
   .Error = (...) -> .Create(...)!
   .Assert = Hybrid (condition, ...) -> 
