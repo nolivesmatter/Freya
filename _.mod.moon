@@ -47,6 +47,8 @@ if Freya
     for Package in *Packages
       Package.Resource.Parent = Locate Package.Origin.Type
       print "[Freya] Restoring #{Package.Origin.Name}"
+    --// Recognise the new Freya
+    Freya = game.ServerStorage.Freya
 
   FreyaStudio = Freya.FreyaStudio
 else
