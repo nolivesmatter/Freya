@@ -14,6 +14,7 @@ Hybrid = (f) -> (...) ->
 ErrorData = setmetatable {}, mode: 'k'
 ResolvableData = setmetatable {}, mode: 'k'
 TemplateData = setmetatable {}, mode: 'k'
+CatData = setmetatable {}, mode: 'k'
 Resolvables = {}
 
 ResolvableMt = {
@@ -63,7 +64,10 @@ TemplateClass = with {
       assert tData,
         "[Error][Freya Errors] (in Template.Create): You need to call this as a method.",
         2
-      cat = tData.Category
+      cat = CatData[tData.Category]
+      assert cat,
+        "[Error][Freya Errors] (in Template.Insert): Malformed template category data :c",
+        2
       if cat[ID]
         warn "[Warn][Freya Errors] (in Template.Insert): Error ##{ID} already exists. Replacing."
       if cat[Name]
@@ -144,6 +148,7 @@ Error = with {
           mt[e] = m
       
       Resolvables[Name] = newtree
+      CatData[newtree] = res
       with getmetatable newtree
         .__index = res
         .__call = (const, last) => next res, last
