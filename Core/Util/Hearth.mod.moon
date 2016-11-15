@@ -230,7 +230,7 @@ Hearth = {
           -- Origin
           -- Name
           -- Version
-          return error "[Error][Freya Hearth] Malformed dependency list" unless 
+          return error "[Error][Freya Hearth] Malformed dependency list" unless dep.Name
           pak = GetPackage dep.Name
           if pak -- If it's installed
             if dep.Version
