@@ -69,14 +69,14 @@ ResolveVersion = Hybrid (Version) ->
 ResolvePackage = Hybrid (Package, Version) ->
     switch type Package
       when 'number'
-      -- AssetId for package.
-      -- Versions are irrelevant.
-      s, package = pcall -> game\GetService"InsertService"\LoadAsset Package
-      return nil, "Unable to get package: #{package}" unless s
-      s, package = pcall require, package
-      return nil, "Unable to require package: #{package}" unless s
-      return nil, "Package does not return a table" unless type(package) == 'table'
-      return package
+        -- AssetId for package.
+        -- Versions are irrelevant.
+        s, package = pcall -> game\GetService"InsertService"\LoadAsset Package
+        return nil, "Unable to get package: #{package}" unless s
+        s, package = pcall require, package
+        return nil, "Unable to require package: #{package}" unless s
+        return nil, "Package does not return a table" unless type(package) == 'table'
+        return package
       when 'string'
         --  Determine protocol
         switch Package\match '^(%w):'
@@ -85,19 +85,23 @@ ResolvePackage = Hybrid (Package, Version) ->
             -- No extended support (Scripts only)
             -- Count the path
             switch select 2, Package\gsub('/', '')
-              when 2
+              when 2 
+                nil
                 -- Repo is package
               when 3
+                nil
                 -- Repo is package repo; Get defs from repo
               else
                 return nil, "Invalid Github package protocol"
           when 'freya'
             -- Freya-based package.
             -- No Freya APIs available for getting this data yet
+            nil
           else
             -- Unknown protocol or no protocol.
             -- Assume Freya packages or Github packages.
             -- Check existing package repo list.
+            nil
       when 'userdata'
         -- We'll assume it's a ModuleScript already. No version check.
         s, err = pcall require, Package
