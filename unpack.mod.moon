@@ -7,7 +7,7 @@
 Clear = (Location, Name) ->
   obj = Location\FindFirstChild Name
   if obj
-    print "[Freya] Cleaning", obj\GetFullName
+    print "[Freya] Cleaning", obj\GetFullName!
     obj\Destroy!
 
 =>
