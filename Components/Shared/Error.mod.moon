@@ -37,7 +37,7 @@ ErrorClassMt = {
     msg = "[Error][#{@Component or @Source or 'Something'}]" .. msg
     error msg, j and j+1 or 2
   __len: => @ErrorCode
-  __tostring: => ResolvableData[@ErrorCode].Message\gsub "%%(%a+)%%", @
+  __tostring: => ResolvableData[@ErrorCode].Message\gsub "%%(%a+)%%", (s) -> tostring @[s]
   __metatable: "Locked Metatable: Freya"
 }
 
@@ -56,6 +56,7 @@ TemplateClass = with {
       for e,m in pairs ErrorClassMt
         _mt[e] = m
       ErrorData[newErr] = Data
+      Data.ErrorCode = ErrorType
       for k,v in pairs tData
         Data[k] or= v
       return newErr
@@ -118,6 +119,7 @@ Error = with {
       for e,m in pairs ErrorClassMt
         _mt[e] = m
       ErrorData[newErr] = Data
+      Data.ErrorCode = ErrorType
       -- It's not immutable how scary
       return newErr
     Template: Hybrid (Name, Errors, DefaultData) ->
@@ -161,6 +163,7 @@ Error = with {
       TemplateData[ni] = DefaultData
       DefaultData.Name = Name
       DefaultData.Category = newtree
+      DefaultData.Source = Name
       
       return ni
     Resolvables: resproxy
