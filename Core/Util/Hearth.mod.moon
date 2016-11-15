@@ -271,9 +271,9 @@ Hearth = {
       }
       for pak in *Packages
         if pak.Origin.Name == sav.Origin.Name
-        pak.Resource = sav.Resource
-        sav = pak
-        break
+          pak.Resource = sav.Resource
+          sav = pak
+          break
       Flush!
       return sav
   UninstallPackage: Hybrid (Package) ->
