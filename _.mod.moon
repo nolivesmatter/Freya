@@ -33,8 +33,8 @@ if Freya
     --// Update Freya
     print "[Freya] Updating Freya to " .. script.Version.Value
     script.Core.PackageList\Destroy!
-    Freya.PackageList.Parent = script
-    Packages = require script.PackageList
+    Freya.PackageList.Parent = script.Core
+    Packages = require script.Core.PackageList
     Hearth = require script.Core.Util.Hearth
     Locate = Hearth.Locate
     --// Preserve Packages
