@@ -45,7 +45,7 @@ Origin = {
     .Parent = script.Parent.Parent
     
 ResolveVersion = Hybrid (Version) ->
-    i,j,branch,major,minor,patch = Version\find("^(%a+)%.(%d+)%.?(%d*)%.?(%d*)$")
+    i,j,branch,major,minor,patch = Version\find("^(%a[%w_-]*)%.(%d+)%.?(%d*)%.?(%d*)$")
     if i
       return {
         :branch
