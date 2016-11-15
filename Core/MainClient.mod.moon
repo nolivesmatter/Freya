@@ -24,7 +24,7 @@ IsInstance = do
 Components = {}
 
 with game.ReplicatedStorage.Freya.Components
-  \WaitForChild "Events"
+  .Shared\WaitForChild "Events"
   for v in *.Shared\GetChildren!
     Components[v.Name] = require v
   for v in *.Client\GetChildren!
