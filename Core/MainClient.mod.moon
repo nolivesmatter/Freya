@@ -33,7 +33,7 @@ with game.ReplicatedStorage.Freya.Components
 ComponentAdded = Components.Events.new!
 
 game.ReplicatedStorage.Freya.Components.DescendantAdded\connect (obj) ->
-  Components[obj.Name] = require obj;
+  Components[obj.Name] = require obj
   ComponentAdded\Fire obj.Name
 
 Controller = with {
