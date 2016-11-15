@@ -27,7 +27,7 @@ PackageModule = script.Parent.Parent.PackageList
 Packages = require PackageModule
 Flush = ->
   PackageModule\Destroy!
-  Buffer = {'{'}
+  Buffer = {'return {'}
   for Package in *Packages
     Buffer[#Buffer+1] = "{
 Resource = #{Package.Resource\GetFullName!\gsub '^([^%.%[]+)', 'game:GetService(\'%1\')'};
