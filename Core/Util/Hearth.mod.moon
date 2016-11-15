@@ -55,7 +55,7 @@ ResolveVersion = Hybrid (Version) ->
       }
     else
       warn "Unusual version format."
-      i,j,major,minor,patch = Version\find(^(%d+)%.?(%d*)%.?(%d*)$)
+      i,j,major,minor,patch = Version\find("^(%d+)%.?(%d*)%.?(%d*)$")
       if i
         return {
           major: tonumber major
