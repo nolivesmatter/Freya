@@ -73,7 +73,7 @@ TemplateClass = with {
       cat[Name] = newResolvable
       cat[newResolvable] = newResolvable
       ResolvableData[newResolvable] = {
-        ID: i
+        ID: ID
         Name: Name
         Message: Message
         Origin: tData.Name
