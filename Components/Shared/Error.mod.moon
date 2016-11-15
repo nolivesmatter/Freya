@@ -89,14 +89,14 @@ with TemplateClass = {
   .new = .Create
 
 TemplateClassMt = {
-  .__index: (k) =>
+  __index: (k) =>
     return switch k
       when "ErrorTypes", "ErrorType", "Types"
         TemplateData[@].Category
       else
         TemplateClass[k] or TemplateData[@][k]
-  .__tostring: => "Freya Error Template (#{@Category})"
-  .__metatable: "Locked metatable: Freya"
+  __tostring: => "Freya Error Template (#{@Category})"
+  __metatable: "Locked metatable: Freya"
 }
 
 Error = with {
