@@ -151,12 +151,12 @@ Clear = (Location, Name) ->
     .Parent = RSFreya
   @Core.InitServer.Parent = SSSFreya
   @Core.InitClient.Parent = RFFreya
+  @Core.PackageList.Parent = SSFreya
   Clear RSFreya, "Intent"
   print "[Freya] Creating Freya Intent RemoteEvent"
   with Instance.new "RemoteEvent"
     .Name = "Intent"
     .Parent = RSFreya
   @Version.Parent = SSFreya
-  @PackageList.Parent = SSFreya
   @vanish.Parent = SSFreya
   print "[Freya] Finished unpacking Freya"
