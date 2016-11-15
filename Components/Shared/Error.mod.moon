@@ -12,7 +12,7 @@ Hybrid = (f) -> (...) ->
   return f select 2, ... if ... == ni else f ...
   
 ErrorData = setmetatable {}, mode: 'k'
-ResovableData = setmetatable {}, mode: 'k'
+ResolvableData = setmetatable {}, mode: 'k'
 TemplateData = setmetatable {}, mode: 'k'
 Resolvables = {}
 
@@ -40,7 +40,7 @@ ErrorClassMt = {
   __metatable: "Locked Metatable: Freya"
 }
 
-with TemplateClass = {
+TemplateClass = with {
     Create: (ErrorType, Data = {}) =>
       tData = TemplateData[@]
       assert tData,
@@ -64,9 +64,9 @@ with TemplateClass = {
         "[Error][Freya Errors] (in Template.Create): You need to call this as a method.",
         2
       cat = tData.Category
-      if Category[ID]
+      if cat[ID]
         warn "[Warn][Freya Errors] (in Template.Insert): Error ##{ID} already exists. Replacing."
-      if Category[Name]
+      if cat[Name]
         warn "[Warn][Freya Errors] (in Template.Insert): Error \"#{Name}\" already exists. Replacing."
       newResolvable = newproxy true
       cat[ID] = newResolvable
@@ -105,7 +105,7 @@ Error = with {
       assert ResolvableData[ErrorType],
         "[Error][Freya Errors] (in Create): Missing ErrorType as arg #1",
         2
-      assert type(data) == 'table',
+      assert type(Data) == 'table',
         "[Error][Freya Errors] (in Create): Missing Data table as arg #2",
         2
       -- Create the error!
@@ -151,7 +151,7 @@ Error = with {
         .__tostring = Name
       
       mt = getmetatable ni
-      for e,m in pairs TemplateMt
+      for e,m in pairs TemplateClassMt
         mt[e] = m
       TemplateData[ni] = DefaultData
       DefaultData.Name = Name
