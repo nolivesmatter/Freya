@@ -9,5 +9,6 @@ with _G.Freya
   Intents = .GetComponent "Intents"
   Permissions = .GetComponent "Permissions"
   Events = .GetComponent "Events"
+  Errors = .GetComponent "Error"
 
 print "Loaded Components"
