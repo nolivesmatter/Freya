@@ -150,10 +150,9 @@ Error = with {
         .__metatable = "Locked metatable: Freya"
         .__tostring = Name
       
-      do
-        mt = getmetatable ni
-        for e,m in pairs TemplateMt
-          mt[e] = m
+      mt = getmetatable ni
+      for e,m in pairs TemplateMt
+        mt[e] = m
       TemplateData[ni] = DefaultData
       DefaultData.Name = Name
       DefaultData.Category = newtree
