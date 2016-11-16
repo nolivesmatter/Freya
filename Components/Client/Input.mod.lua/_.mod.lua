@@ -767,7 +767,7 @@ do
 
     -- Wrap the function in a binding
     local func,bfunc = self.Action
-    if d == InputDirections.DownUp then
+    if dir == InputDirections.DownUp then
       local down = false;
       bfunc = function(i,d,p,r)
         if d == InputDirections.Up then
@@ -823,7 +823,7 @@ do
 
     -- Wrap the function in a binding
     local func,bfunc = self.Action
-    if d == InputDirections.DownUp then
+    if dir == InputDirections.DownUp then
       local down = false;
       bfunc = function(i,d,p,r)
         if d == InputDirections.Up then
@@ -895,7 +895,7 @@ do
           end;
         end;
       else
-        bfunc = function(i,d,p,r)
+        bfunc = function(i,dir,p,r)
           if d == dir then
             return func(i,p,r);
           end;
@@ -907,7 +907,7 @@ do
     local Button;
     if makebutton then
       Button = Instance.new("ImageButton", game.Player.LocalPlayer.PlayerGui.ControlGui);
-      Connections[#Connections+1] = self:BindButtonPress(newButton);
+      Connections[#Connections+1] = self:BindButtonPress(Button);
       Connections[#Connections+1] = CustomConnection(function() Button:Destroy() end);
     end
 
