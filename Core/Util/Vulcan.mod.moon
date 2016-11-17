@@ -181,7 +181,8 @@ Vulcan = {
       pkgloc = Locate .Type
       opkg = pkgloc\FindFirstChild .Package.Name
       if opkg
-        if .Update and force 
+        return error "[Error][Freya Vulcan] Unable to install package because it already exists." unless force
+        if .Update
           .Update opkg, .Package
           warn "[Warn][Freya Vulcan] Updating #{.Name or .Package.Name} before an install."
         opkg\Destroy!
