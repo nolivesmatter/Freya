@@ -35,8 +35,8 @@ if Freya
     script.Core.PackageList\Destroy!
     Freya.PackageList.Parent = script.Core
     Packages = require script.Core.PackageList
-    Hearth = require script.Core.Util.Hearth
-    Locate = Hearth.Locate
+    Vulcan = require script.Core.Util.Vulcan
+    Locate = Vulcan.Locate
     --// Preserve Packages
     for Package in *Packages
       print "[Freya] Preserving #{Package.Origin.Name}"
