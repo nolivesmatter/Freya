@@ -1,295 +1,770 @@
-pow2 = setmetatable({[-1] = 0, [0] = 1,2,4,8,16,32,64,128,256},{__index = function(t,k)
-  local v = 2^k
-  table.insert(t,k,v)
-  return v
-end}); -- -1 is not 0, but for ease...
+--[[
 
-function lsh(value,shift) -- Left Shift
-	return (value*pow2[shift]) % 256
+Based on the BitBuffer module by Stravant
+Author profile: https://www.roblox.com/users/80119/profile/
+Module origin: https://www.roblox.com/library/174612085/BitBuffer-Module
+
+Wrapped for BitStream in Freya. If there are issues with this, whine at Lunate:
+https://www.roblox.com/users/65765854/profile
+
+Modified to include extra serialization options, FieldEncode/Decode,
+encapsulation, small performance tweaks, and metamethods.
+
+==========================================================================
+==                                	API                                 ==
+
+Constructor: BitBuffer.Create()
+
+Read/Write pairs for reading data from or writing data to the BitBuffer:
+	BitBuffer:WriteUnsigned(bitWidth, value)
+	BitBuffer:ReadUnsigned(bitWidth)
+		Read / Write an unsigned value with a given number of bits. The
+		value must be a positive integer. For instance, if bitWidth is
+		4, then there will be 4 magnitude bits, for a value in the
+		range [0, 2^4-1] = [0, 15]
+
+	BitBuffer:WriteSigned(bitWidth, value)
+	BitBuffer:ReadSigned(bitWidth)
+		Read / Write a a signed value with a given number of bits. For
+		instance, if bitWidth is 4 then there will be 1 sign bit and
+		3 magnitude bits, a value in the range [-2^3+1, 2^3-1] = [-7, 7]
+
+	BitBuffer:WriteFloat(mantissaBitWidth, exponentBitWidth, value)
+	BitBuffer:ReadFloat(mantissaBitWidth, exponentBitWidth)
+		Read / Write a floating point number with a given mantissa and
+		exponent size in bits.
+
+	BitBuffer:WriteFloat32(value)
+	BitBuffer:ReadFloat32()
+	BitBuffer:WriteFloat64(value)
+	BitBuffer:ReadFloat64()
+		Read and write the common types of floating point number that
+		are used in code. If you want to 100% accurately save an
+		arbitrary Lua number, then you should use the Float64 format. If
+		your number is known to be smaller, or you want to save space
+		and don't need super high precision, then a Float32 will often
+		suffice. For instance, the Transparency of an object will do
+		just fine as a Float32.
+
+	BitBuffer:WriteBool(value)
+	BitBuffer:ReadBool()
+		Read / Write a boolean (true / false) value. Takes one bit worth
+		of space to store.
+
+	BitBuffer:WriteString(str)
+	BitBuffer:ReadString()
+		Read / Write a variable length string. The string may contain
+		embedded nulls. Only 7 bits / character will be used if the
+		string contains no non-printable characters (greater than 0x80).
+
+	BitBuffer:WriteBrickColor(color)
+	BitBuffer:ReadBrickColor()
+		Read / Write a roblox BrickColor. Provided as an example of
+		reading / writing a derived data type.
+
+	BitBuffer:WriteRotation(cframe)
+	BitBuffer:ReadRotation()
+		Read / Write the rotation part of a given CFrame. Encodes the
+		rotation in question into 64bits, which is a good size to get
+		a pretty dense packing, but still while having errors well within
+		the threshold that Roblox uses for stuff like MakeJoints()
+		detecting adjacency. Will also perfectly reproduce rotations which
+		are orthagonally aligned, or inverse-power-of-two rotated on only
+		a single axix. For other rotations, the results may not be
+		perfectly stable through read-write cycles (if you read/write an
+		arbitrary rotation thousands of times there may be detectable
+		"drift")
+
+
+From/To pairs for dumping out the BitBuffer to another format:
+	BitBuffer:ToString()
+	BitBuffer:FromString(str)
+		Will replace / dump out the contents of the buffer to / from
+		a binary chunk encoded as a Lua string. This string is NOT
+		suitable for storage in the Roblox DataStores, as they do
+		not handle non-printable characters well.
+
+	BitBuffer:ToBase64()
+	BitBuffer:FromBase64(str)
+		Will replace / dump out the contents of the buffer to / from
+		a set of Base64 encoded data, as a Lua string. This string
+		only consists of Base64 printable characters, so it is
+		ideal for storage in Roblox DataStores.
+
+Buffer / Position Manipulation
+	BitBuffer:ResetPtr()
+		Will Reset the point in the buffer that is being read / written
+		to back to the start of the buffer.
+
+	BitBuffer:Reset()
+		Will reset the buffer to a clean state, with no contents.
+
+--[[
+String Encoding:
+	   Char 1   Char 2
+str:  LSB--MSB LSB--MSB
+Bit#  1,2,...8 9,...,16
+--]]
+
+local floor, ceil = math.floor, math.ceil
+local insert, concat = table.insert, table.concat
+local byte, char, sub = string.byte, string.char, string.sub
+
+local NumberToBase64; local Base64ToNumber; do
+	NumberToBase64 = {}
+	Base64ToNumber = {}
+	local chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+	for i = 1, #chars do
+		local ch = sub(chars, i, i)
+		NumberToBase64[i-1] = ch
+		Base64ToNumber[ch] = i-1
+	end
 end
 
-function rsh(value,shift) -- Right shift
-	return math.floor(value/pow2[shift]) % 256
+local PowerOfTwo; do
+	PowerOfTwo = {[0] = 1} -- Small modification for performance
+	for i = 1, 64 do
+		insert(PowerOfTwo, i, 2^i) -- Force it to stay in the array part.
+	end
 end
 
-function bit(x,b) -- Select single bit
-	return (x % pow2[b] - x % pow2[b-1] > 0)
+local BrickColorToNumber; local NumberToBrickColor; do
+	BrickColorToNumber = {}
+	NumberToBrickColor = {}
+	for i = 0, 63 do
+		local color = BrickColor.palette(i)
+		BrickColorToNumber[color.Number] = i
+		NumberToBrickColor[i] = color
+	end
 end
 
--- logic OR for number values
-function lor(x,y)
-	result = 0
-	for p=1,8 do result = result + (((bit(x,p) or bit(y,p)) == true) and pow2[p-1] or 0) end
-	return result
-end
-
-local function bitRange(str, beginBit, endBit)
-    local byte_t = { 1, 2, 4, 8, 16, 32, 64, 128 }
-
-    local beginChar = math.ceil( beginBit/8 )
-    local endChar = math.ceil( endBit/8 )
-    local range = str:sub( beginChar, endChar )
-
-    local bits = {}
-    local beginOffset = beginBit%8 - 1
-    local endOffset = endBit - beginOffset + 1
-
-    for num = 1,#range do
-        local byte = str:sub(num, num):byte()
-        local offset = (num-1)*8 - beginOffset
-
-        for bit=8, 1, -1 do
-            local sub = byte - byte_t[bit]
-            local pos = offset + bit
-
-            if sub >= 0 then
-                if pos > 0 and pos < endOffset then
-                    bits[pos] = true
-                end
-                byte = sub
-            else
-                if pos > 0 and pos < endOffset then
-                    bits[pos] = false
-                end
-            end
-        end
+local function ToBase(n, b)
+    n = floor(n)
+    if not b or b == 10 then return tostring(n) end
+    local digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    local t = {}
+    local sign = ""
+    if n < 0 then
+        sign = "-"
+        n = -n
     end
-    return bits
+    repeat
+        local d = (n % b) + 1
+        n = floor(n / b)
+        insert(t, 1, sub(digits, d, d))
+    until n == 0
+    return sign..concat(t, "")
 end
 
-local function GetBits(integer, idx, n)
-  return math.floor(integer / pow2[idx]) % pow2[n]
+local function round(n)
+  return floor(n + 0.5)
 end
 
-local function getRangeN(str, idxStart, idxEnd)
-  idxStart = idxStart - 1;
-  idxEnd = idxEnd - 1;
-  local firstChar = math.floor(idxStart/8) + 1
-  local lastChar = math.floor(idxEnd/8) + 1
-  local relStartIdx = idxStart % 8
-  local numBits = idxEnd - idxStart + 1
+local function Create()
+  -- Closures for performance.
+  -- Flyweight pattern not observed due to buffers having specific use cases
+  local this = {}
 
-  local sum = 0
-  for p = firstChar, lastChar do
-    sum = sum * 2^8
-    sum = sum + str:byte(p,p)
+  local Reset, ResetPtr, FromString, ToString, FromBase64, ToBase64, Dump
+  local writeBit, readBit, WriteUnsigned, ReadUnsigned, WriteSigned, ReadSigned
+  local WriteString, ReadString, WriteBool, ReadBool
+  local WriteFloat, WriteFloat32, WriteFloat32
+  local ReadFloat, ReadFloat32, ReadFloat64
+  local WriteBrickColor, ReadBrickColor, WriteColor3, ReadColor3
+  local WriteRotation, ReadRotation, WriteVector3, ReadVector3
+  local WriteRaw, ReadRaw, Seek, FieldEncode, FieldDecode
+
+  -- Tracking
+  local mBitPtr = 0
+  local mBitBuffer = {}
+
+  function ResetPtr()
+  	mBitPtr = 0
+  end
+  function Reset()
+  	mBitBuffer = {}
+  	mBitPtr = 0
   end
 
-  return GetBits(sum, (lastChar - firstChar + 1)*8 - numBits - relStartIdx, numBits)
-end
-
-
--- 10010000
--- 12345678
-
-local base64chars = { [0] =
-   'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P',
-   'Q','R','S','T','U','V','W','X','Y','Z','a','b','c','d','e','f',
-   'g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v',
-   'w','x','y','z','0','1','2','3','4','5','6','7','8','9','+','/',
-}
-
-local function enc64(data)
-	local bytes = {}
-	local result = ""
-	for spos=0,string.len(data)-1,3 do
-		for byte=1,3 do bytes[byte] = string.byte(string.sub(data,(spos+byte))) or 0 end
-		result = string.format('%s%s%s%s%s',result,base64chars[rsh(bytes[1],2)],base64chars[lor(lsh((bytes[1] % 4),4), rsh(bytes[2],4))] or "=",((#data-spos) > 1) and base64chars[lor(lsh(bytes[2] % 16,2), rsh(bytes[3],6))] or "=",((#data-spos) > 2) and base64chars[(bytes[3] % 64)] or "=")
-	end
-	return result
-end
-
-local base64bytes = {['A']=0,['B']=1,['C']=2,['D']=3,['E']=4,['F']=5,['G']=6,['H']=7,['I']=8,['J']=9,['K']=10,['L']=11,['M']=12,['N']=13,['O']=14,['P']=15,['Q']=16,['R']=17,['S']=18,['T']=19,['U']=20,['V']=21,['W']=22,['X']=23,['Y']=24,['Z']=25,['a']=26,['b']=27,['c']=28,['d']=29,['e']=30,['f']=31,['g']=32,['h']=33,['i']=34,['j']=35,['k']=36,['l']=37,['m']=38,['n']=39,['o']=40,['p']=41,['q']=42,['r']=43,['s']=44,['t']=45,['u']=46,['v']=47,['w']=48,['x']=49,['y']=50,['z']=51,['0']=52,['1']=53,['2']=54,['3']=55,['4']=56,['5']=57,['6']=58,['7']=59,['8']=60,['9']=61,['-']=62,['_']=63,['=']=nil}
-
-local function dec64(...)
-	local data = Hybrid(...)
-	local chars = {}
-	local result=""
-	for dpos=0,string.len(data)-1,4 do
-		for char=1,4 do chars[char] = base64bytes[(string.sub(data,(dpos+char),(dpos+char)) or "=")] end
-		result = string.format('%s%s%s%s',result,string.char(lor(lsh(chars[1],2), rsh(chars[2],4))),(chars[3] ~= nil) and string.char(lor(lsh(chars[2],4), rsh(chars[3],2))) or "",(chars[4] ~= nil) and string.char(lor(lsh(chars[3],6) % 192, (chars[4]))) or "")
-	end
-	return result
-end
-
-local function FieldEncode(...)
-  local data = Hybrid(...)
-  local tmp = {}
-  local _byte = 1
-  local _cnt = 1
-  data = data:gsub('[\000\254]', function(s)
-    if s == '\0' then
-      _byte = _byte + pow2[_cnt]
-    end;
-    _cnt = _cnt + 1
-    if _cnt == 8 then
-      _cnt = 1
-      tmp[#tmp+1] = string.char(_byte)
-    end;
-    return '\254'
-  end);
-  if _cnt > 1 then
-    tmp[#tmp+1] = string.char(_byte)
+  -- Read / Write to a string
+  function FromString(str)
+  	Reset()
+  	WriteRaw(#str*8, str);
+  	mBitPtr = 0
   end
-  return table.concat(tmp,'') .. data
-end;
+  function ToString()
+    local tmp = mBitPtr;
+    mBitPtr = 0;
+  	local r = ReadRaw(#mBitBuffer);
+    mBitPtr = tmp;
+    return r;
+  end
 
-local function FieldDecode(...)
-  local data = Hybrid(...)
-  local count = #data:gsub('[^\254]','');
-  local bytecount = math.ceil(count/7); -- Yes, 7.
-  local bits = bitRange(data, 1, bytecount);
-  local _cnt = 1;
-  data = data:gsub('\254', function(s)
-    return bits[_cnt] and '\0' or '\254'
-    if _cnt % 8 == 7 then
-      _cnt = _cnt + 2
-    else
-      _cnt = _cnt + 1
-    end;
-  end);
-  return data
-end;
+  -- Read / Write to base64
+  function FromBase64(str)
+  	Reset()
+  	for i = 1, #str do
+  		local ch = Base64ToNumber[sub(str, i, i)]
+  		assert(ch, "Bad character: 0x"..ToBase(byte(str, i, i), 16))
+  		for i = 1, 6 do
+  			mBitPtr = mBitPtr + 1
+  			mBitBuffer[mBitPtr] = ch % 2
+  			ch = floor(ch / 2)
+  		end
+  		assert(ch == 0, "Character value 0x"..ToBase(Base64ToNumber[sub(str, i, i)], 16).." too large")
+  	end
+  	ResetPtr()
+  end
+  function ToBase64()
+  	local strtab = {}
+  	local accum = 0
+  	local pow = 0
+  	for i = 1, ceil((#mBitBuffer) / 6)*6 do
+  		accum = accum + PowerOfTwo[pow]*(mBitBuffer[i] or 0)
+  		pow = pow + 1
+  		if pow >= 6 then
+  			insert(strtab, NumberToBase64[accum])
+  			accum = 0
+  			pow = 0
+  		end
+  	end
+  	return concat(strtab)
+  end
 
+  -- Dump
+  function Dump()
+  	local str = ""
+  	local str2 = ""
+  	local accum = 0
+  	local pow = 0
+  	for i = 1, ceil((#mBitBuffer) / 8)*8 do
+  		str2 = str2..(mBitBuffer[i] or 0)
+  		accum = accum + PowerOfTwo[pow]*(mBitBuffer[i] or 0)
+  		--print(pow..": +"..PowerOfTwo[pow].."*["..(mBitBuffer[i] or 0).."] -> "..accum)
+  		pow = pow + 1
+  		if pow >= 8 then
+  			str2 = str2.." "
+  			str = str.."0x"..ToBase(accum, 16).." "
+  			accum = 0
+  			pow = 0
+  		end
+  	end
+  	print("Bytes:", str)
+  	print("Bits:", str2)
+  end
 
-local data = setmetatable({},{__mode = 'k'});
+  -- Read / Write a bit
+  function writeBit(v)
+  	mBitPtr = mBitPtr + 1
+  	mBitBuffer[mBitPtr] = v
+  end
+  function readBit()
+  	mBitPtr = mBitPtr + 1
+  	return mBitBuffer[mBitPtr]
+  end
 
-local BitMt = {
-  __index = {
-    toB64 = function(t)
-      if not data[t] then
-        return error("toB64 was not called as a method!", 2);
-      end;
-      t = data[t];
-      return enc64(t.data .. t.cache)
-    end;
-    toFieldEncoded = function(t)
-      local data = data[t];
-      if not data then
-        return error("toFieldEncoded was not called as a method!", 2);
+  -- Read / Write an unsigned number
+  function WriteUnsigned(w, value)
+  	assert(w, "Bad arguments to BitBuffer::WriteUnsigned (Missing BitWidth)")
+  	assert(value, "Bad arguments to BitBuffer::WriteUnsigned (Missing Value)")
+  	assert(value >= 0, "Negative value to BitBuffer::WriteUnsigned")
+  	assert(math.floor(value) == value, "Non-integer value to BitBuffer::WriteUnsigned")
+
+  	-- Store LSB first
+  	for i = 1, w do
+  		writeBit(value % 2)
+  		value = floor(value / 2)
+  	end
+  	assert(value == 0, "Value "..tostring(value).." has width greater than "..w.."bits")
+  end
+  function ReadUnsigned(w)
+  	local value = 0
+  	for i = 1, w do
+  		value = value + readBit() * PowerOfTwo[i-1]
+  	end
+  	return value
+  end
+
+  -- Read / Write a signed number
+  function WriteSigned(w, value)
+  	assert(w and value, "Bad arguments to BitBuffer::WriteSigned (Did you forget a bitWidth?)")
+  	assert(floor(value) == value, "Non-integer value to BitBuffer::WriteSigned")
+
+  	-- Write sign
+  	if value < 0 then
+  		writeBit(1)
+  		value = -value
+  	else
+  		writeBit(0)
+  	end
+  	-- Write value
+  	WriteUnsigned(w-1, value, true)
+  end
+  function ReadSigned(w)
+  	-- Read sign
+  	local sign = (-1)^readBit()
+  	-- Read value
+  	local value = ReadUnsigned(w-1, true)
+  	return sign*value
+  end
+
+  -- Read / Write a string. May contain embedded nulls (string.char(0))
+  function WriteString(s)
+  	-- First check if it's a 7 or 8 bit width of string
+  	local bitWidth = 7
+  	for i = 1, #s do
+  		if byte(s, i, i) > 127 then
+  			bitWidth = 8
+  			break
+  		end
+  	end
+
+  	-- Write the bit width flag
+  	writeBit(bitWidth == 7 and 0 or 1);
+
+  	-- Now write out the string, terminated with "0x10, 0b0"
+  	-- 0x10 is encoded as "0x10, 0b1"
+  	for i = 1, #s do
+  		local ch = byte(s, i, i);
+  		if ch == 0x10 then
+  			WriteUnsigned(bitWidth, 0x10)
+  			writeBit(1);
+  		else
+  			WriteUnsigned(bitWidth, ch)
+  		end
+  	end
+
+  	-- Write terminator
+  	WriteUnsigned(bitWidth, 0x10)
+  	writeBit(0);
+  end
+  function ReadString()
+  	-- Get bit width
+  	local bitWidth = 7 + readBit();
+
+  	-- Loop
+  	local buffer = {}
+    i = 0;
+  	while true do
+      i = i+1;
+  		local ch = ReadUnsigned(bitWidth)
+  		if ch == 0x10 and readBit() == 0 then
+        break
+  		else
+  			buffer[i] = char(ch)
+  		end
+  	end
+  	return concat(buffer);
+  end
+
+  -- Read / Write a bool
+  function WriteBool(v)
+  	writeBit(v and 1 or 0)
+  end
+  function ReadBool()
+    return readBit() == 1
+  end
+
+  -- Read / Write a floating point number with |wfrac| fraction part
+  -- bits, |wexp| exponent part bits, and one sign bit.
+  function WriteFloat(wfrac, wexp, f)
+  	assert(wfrac and wexp and f)
+
+  	-- Sign
+  	local sign = 1
+  	if f < 0 then
+  		f = -f
+  		sign = -1
+  	end
+
+  	-- Decompose
+  	local mantissa, exponent = math.frexp(f)
+  	if exponent == 0 and mantissa == 0 then
+  		WriteUnsigned(wfrac + wexp + 1, 0)
+  		return
+  	else
+  		mantissa = ((mantissa - 0.5) * PowerOfTwo[wfrac+1])
+  	end
+
+  	-- Write sign
+  	if sign == -1 then
+  		writeBit(1)
+  	else
+  		writeBit(0)
+  	end
+
+  	-- Write mantissa
+  	mantissa = floor(mantissa + 0.5) -- Not really correct, should round up/down based on the parity of |wexp|
+  	WriteUnsigned(wfrac, mantissa)
+
+  	-- Write exponent
+  	local maxExp = PowerOfTwo[wexp-1]-1
+  	if exponent > maxExp then
+  		exponent = maxExp
+  	end
+  	if exponent < -maxExp then
+  		exponent = -maxExp
+  	end
+  	WriteSigned(wexp, exponent)
+  end
+  function ReadFloat(wfrac, wexp)
+  	assert(wfrac and wexp)
+
+  	-- Read sign
+  	local sign = 1
+  	if ReadBool() then
+  		sign = -1
+  	end
+
+  	-- Read mantissa
+  	local mantissa = ReadUnsigned(wfrac)
+
+  	-- Read exponent
+  	local exponent = ReadSigned(wexp)
+  	if exponent == 0 and mantissa == 0 then
+  		return 0
+  	end
+
+  	-- Convert mantissa
+  	mantissa = mantissa / PowerOfTwo[wfrac+1] + 0.5
+
+  	-- Output
+  	return sign * math.ldexp(mantissa, exponent)
+  end
+
+  -- Read / Write single precision floating point
+  function WriteFloat32(f)
+  	WriteFloat(23, 8, f)
+  end
+  function ReadFloat32()
+  	return ReadFloat(23, 8)
+  end
+
+  -- Read / Write double precision floating point
+  function WriteFloat64(f)
+  	WriteFloat(52, 11, f)
+  end
+  function ReadFloat64()
+  	return ReadFloat(52, 11)
+  end
+
+  -- Read / Write a BrickColor
+  function WriteBrickColor(b)
+  	local pnum = BrickColorToNumber[b.Number]
+  	if not pnum then
+  		warn("Attempt to serialize non-pallete BrickColor `"..tostring(b).."` (#"..b.Number.."), using Light Stone Grey instead.")
+  		pnum = BrickColorToNumber[BrickColor.new(1032).Number]
+  	end
+  	WriteUnsigned(6, pnum)
+  end
+  function ReadBrickColor()
+  	return NumberToBrickColor[ReadUnsigned(6)]
+  end
+
+  -- Read / Write a rotation as a 64bit value.
+  function WriteRotation(cf)
+  	local lookVector = cf.lookVector
+  	local azumith = math.atan2(-lookVector.X, -lookVector.Z)
+  	local ybase = (lookVector.X^2 + lookVector.Z^2)^0.5
+  	local elevation = math.atan2(lookVector.Y, ybase)
+  	local withoutRoll = CFrame.new(cf.p) * CFrame.Angles(0, azumith, 0) * CFrame.Angles(elevation, 0, 0)
+  	local x, y, z = (withoutRoll:inverse()*cf):toEulerAnglesXYZ()
+  	local roll = z
+  	-- Atan2 -> in the range [-pi, pi]
+  	azumith   = round((azumith   /  math.pi   ) * (2^21-1))
+  	roll      = round((roll      /  math.pi   ) * (2^20-1))
+  	elevation = round((elevation / (math.pi/2)) * (2^20-1))
+  	--
+  	WriteSigned(22, azumith)
+  	WriteSigned(21, roll)
+  	WriteSigned(21, elevation)
+  end
+  function ReadRotation()
+  	local azumith   = ReadSigned(22)
+  	local roll      = ReadSigned(21)
+  	local elevation = ReadSigned(21)
+  	--
+  	azumith =    math.pi    * (azumith / (2^21-1))
+  	roll =       math.pi    * (roll    / (2^20-1))
+  	elevation = (math.pi/2) * (elevation / (2^20-1))
+  	--
+  	local rot = CFrame.Angles(0, azumith, 0)
+  	* CFrame.Angles(elevation, 0, 0)
+  	* CFrame.Angles(0, 0, roll)
+  	--
+  	return rot
+  end
+
+  -- Color3 as 24-bit
+  function WriteColor3(c3)
+    local r = round(c3.r*255);
+    local g = round(c3.g*255);
+    local b = round(c3.b*255);
+    WriteUnsigned(8, r);
+    WriteUnsigned(8, g);
+    WriteUnsigned(8, b);
+  end
+  function ReadColor3()
+    local r = ReadUnsigned(8);
+    local g = ReadUnsigned(8);
+    local b = ReadUnsigned(8);
+    return Color3.fromRGB(r,g,b);
+  end
+
+  -- Vector3 as 64-bit
+  function WriteVector3(v3)
+    WriteFloat(15, 5, v3.x);
+    WriteFloat(15, 6, v3.y);
+    WriteFloat(15, 5, v3.z);
+  end
+  function ReadVector3()
+    return Vector3.new(
+      ReadFloat(15, 5),
+      ReadFloat(15, 6),
+      ReadFloat(15, 5)
+    );
+  end
+
+  -- Raw stream
+  function WriteRaw(length, data)
+    for i = 1, floor(length/8) do
+  		local ch = byte(str, i, i)
+  		for i = 1, 8 do
+  			mBitPtr = mBitPtr + 1
+  			mBitBuffer[mBitPtr] = ch % 2
+  			ch = floor(ch / 2)
+  		end
+  	end
+    local _i = ceil(length/8);
+    local ch = byte(str, _i, _i);
+    for i = 1, length % 8 do
+      mBitPtr = mBitPtr + 1;
+      mBitBuffer[mBitPtr] = ch % 2;
+      ch = floor(ch / 2);
+    end
+  end
+  function ReadRaw(length)
+    local buffer = {}
+  	local accum = 0
+  	local pow = 0
+    local rot = 0
+  	for i = mBitPtr+1, mBitPtr+length do
+      mBitPtr = i;
+  		accum = accum + PowerOfTwo[pow]*(mBitBuffer[i] or 0)
+  		pow = pow + 1
+  		if pow >= 8 then
+        rot = rot + 1
+  			buffer[rot] = char(accum)
+  			accum = 0
+  			pow = 0
+  		end
+  	end
+    if pow > 0 then
+      buffer[rot+1] = char(accum);
+    end
+  	return concat(buffer)
+  end
+
+  -- FieldEncode/Decode for networking
+  local function bitRange(str, beginBit, endBit)
+      local byte_t = { 1, 2, 4, 8, 16, 32, 64, 128 }
+
+      local beginChar = math.ceil( beginBit/8 )
+      local endChar = math.ceil( endBit/8 )
+      local range = str:sub( beginChar, endChar )
+
+      local bits = {}
+      local beginOffset = beginBit%8 - 1
+      local endOffset = endBit - beginOffset + 1
+
+      for num = 1,#range do
+          local byte = str:sub(num, num):byte()
+          local offset = (num-1)*8 - beginOffset
+
+          for bit=8, 1, -1 do
+              local sub = byte - byte_t[bit]
+              local pos = offset + bit
+
+              if sub >= 0 then
+                  if pos > 0 and pos < endOffset then
+                      bits[pos] = true
+                  end
+                  byte = sub
+              else
+                  if pos > 0 and pos < endOffset then
+                      bits[pos] = false
+                  end
+              end
+          end
       end
-      return FieldEncode(t.data .. t.cache);
-    end;
-  };
-  __tostring = function(t)
-    t = data[t];
-    return t.data .. t.cached;
-  end;
-  __add = function(lhs, rhs) -- B|AND
-    if type(lhs) == 'string' then
-      -- RHS is BitStream
-    elseif type(rhs) == 'string' then
-      -- LHS is BitStream
-    elseif data[lhs] and data[rhs] then
-      -- Both are BitStream
-    else
-      return error("Attempt to add BitStream with incompatible type");
-    end
-  end;
-  __unm = function(stream) -- B|NOT
+      return bits
+  end
 
-  end;
-  __sub = function(lhs, rhs) -- B|NAND
-    if type(lhs) == 'string' then
-      -- RHS is BitStream
-    elseif type(rhs) == 'string' then
-      -- LHS is BitStream
-    elseif data[lhs] and data[rhs] then
-      -- Both are BitStream
-    else
-      return error("Attempt to subtract BitStream from incompatible type");
+  function FieldEncode()
+    local data = ToString();
+    local tmp = {};
+    local _byte = 1;
+    local _cnt = 1;
+    data = data:gsub('[\000\254]', function(s)
+      if s == '\0' then
+        _byte = _byte + PowerOfTwo[_cnt];
+      end
+      _cnt = _cnt + 1;
+      if _cnt == 8 then
+        tmp[#tmp+1] = char(_byte);
+        _cnt = 1;
+        _byte = 1;
+      end
+      return '\254';
+    end);
+    if _cnt > 1 then
+      tmp[#tmp+1] = char(_byte);
     end
+    return table.concat(tmp,'') .. data;
   end;
-  __mul = function(lhs, rhs) -- B|OR
-    if type(lhs) == 'string' then
-      -- RHS is BitStream
-    elseif type(rhs) == 'string' then
-      -- LHS is BitStream
-    elseif data[lhs] and data[rhs] then
-      -- Both are BitStream
-    else
-      return error("Attempt to multiply BitStream with incompatible type");
-    end
-  end;
-  __div = function(lhs, rhs) -- B|NOR
-    if type(lhs) == 'string' then
-      -- RHS is BitStream
-    elseif type(rhs) == 'string' then
-      -- LHS is BitStream
-    elseif data[lhs] and data[rhs] then
-      -- Both are BitStream
-    else
-      return error("Attempt to divide BitStream with incompatible type");
-    end
-  end;
-  __mod = function(lhs, rhs) -- B|XOR
-    if type(lhs) == 'string' then
-      -- RHS is BitStream
-    elseif type(rhs) == 'string' then
-      -- LHS is BitStream
-    elseif data[lhs] and data[rhs] then
-      -- Both are BitStream
-    else
-      return error("Attempt to mod BitStream with incompatible type");
-    end
-  end;
-  __concat = function(lhs, rhs) -- Concat data.
-    if type(lhs) == 'string' then
-      -- RHS is BitStream
-    elseif type(rhs) == 'string' then
-      -- LHS is BitStream
-    elseif data[lhs] and data[rhs] then
-      -- Both are BitStream
-    else
-      return error("Attempt to concatenate BitStream with incompatible type");
-    end
-  end;
-  __len = function(t)
-    t = data[t];
-    return #(t.data)*8 + t.hanging
-  end;
-  __metatable = "Locked metatable: Freya bitstream"
-};
 
-local new = function(raw)
-  if data[raw] then return raw end;
-  if type(raw) ~= 'string' then
-    return error("Invalid bit data", 3);
-  end;
-	local ni = newproxy(true);
-  data[ni] = {
-    data = raw;
-    hanging = 0;
-    cached = '';
-  };
+  function FieldDecode(data)
+    local count = #data:gsub('[^\254]','');
+    local bytecount = ceil(count/7); -- Yes, 7.
+    local bits = bitRange(data, 1, bytecount);
+    local _cnt = 1;
+    data = data:gsub('\254', function(s)
+      local r = bits[_cnt] and '\0' or '\254';
+      if _cnt % 8 == 7 then
+        _cnt = _cnt + 2;
+      else
+        _cnt = _cnt + 1;
+      end
+      return r;
+    end);
+    FromString(data);
+  end
+
+  -- Seek
+  function Seek(Where, Offset)
+    Where = Where or 'cur';
+    Offset = Offset or 0;
+    if Where == 'set' then
+      mBitPtr = Offset;
+    elseif Where == 'cur' then
+      mBitPtr = mBitPtr + Offset;
+    elseif Where == 'end' then
+      mBitPtr = #mBitBuffer - Offset;
+    end
+    if mBitPtr > #mBitBuffer then
+      mBitPtr = #mBitBuffer;
+    elseif mBitPtr < 0 then
+      mBitPtr = 1;
+    end
+    return mBitPtr;
+  end
+
+  -- Apparently there's a ton of these.
+  this.Reset = Reset;
+  this.ResetPtr = ResetPtr;
+  this.FromString = FromString;
+  this.ToString = ToString;
+  this.FromBase64 = FromBase64;
+  this.ToBase64 = ToBase64;
+  this.Dump = Dump;
+  this.writeBit = writeBit;
+  this.readBit = readBit;
+  this.WriteUnsigned = WriteUnsigned;
+  this.ReadUnsigned = ReadUnsigned;
+  this.WriteSigned = WriteSigned;
+  this.ReadSigned = ReadSigned;
+  this.WriteString = WriteString;
+  this.ReadString = ReadString;
+  this.WriteBool = WriteBool;
+  this.ReadBool = ReadBool;
+  this.WriteFloat = WriteFloat;
+  this.WriteFloat32 = WriteFloat32;
+  this.WriteFloat32 = WriteFloat32;
+  this.ReadFloat = ReadFloat;
+  this.ReadFloat32 = ReadFloat32;
+  this.ReadFloat64 = ReadFloat64;
+  this.WriteBrickColor = WriteBrickColor;
+  this.ReadBrickColor = ReadBrickColor;
+  this.WriteColor3 = WriteColor3;
+  this.ReadColor3 = ReadColor3;
+  this.WriteRotation = WriteRotation;
+  this.ReadRotation = ReadRotation;
+  this.WriteVector3 = WriteVector3;
+  this.ReadVector3 = ReadVector3;
+  this.WriteRaw = WriteRaw;
+  this.ReadRaw = ReadRaw;
+  this.Seek = Seek;
+  this.FieldEncode = FieldEncode;
+  this.FieldDecode = FieldDecode;
+
+  -- Create object
+  local ni = newproxy(true);
   local mt = getmetatable(ni);
-  for e,m in next, BitMt do
-    mt[e] = m;
+  mt.__index = function(k)
+    return this[k] or mBitBuffer[k]
+  end
+  mt.__len = function()
+    return #mBitBuffer;
+  end
+  mt.__tostring = ToString;
+  mt.__metatable = "Locked metatable: Freya BitStream"
+  -- No other methods because mutator behaviour would be *heavy*
+
+  -- Convert to hybrids
+  for k,v in next, this do
+    this[k] = function(...)
+      if ... == ni then
+        return v(select(2, ...));
+      else
+        return v(...);
+      end
+    end
   end;
-  return ni;
+
+  -- Create aliases
+  this.Clear = this.Reset;
+  this.ResetPointer = this.ResetPtr;
+  this.WriteBit = this.writeBit;
+  this.ReadBit = this.readBit;
+  this.FromFieldEncoded = this.FieldDecode;
+  this.ToFieldEncoded = this.FieldEncode;
+
+  return ni
 end;
 
-local Controller = {
-  fromB64 = function(...) return new(dec64(...)) end; -- Wrap as a BitStream later
-  new = function(...)
-    return new(Hybrid(...));
-  end;
-  fromFieldEncoded = function(...)
-    return new(FieldDecode(Hybrid(...)));
-  end;
-};
 local ni = newproxy(true);
 local mt = getmetatable(ni);
+local Controller =  {
+  Create = Create;
+  fromB64 = function(B64)
+    local n = Create();
+    n:FromBase64(B64);
+    return n;
+  end;
+  fromFieldEncoded = function(data)
+    local n = Create();
+    n:FieldDecode(data);
+    return n;
+  end;
+}
+for k,v in next, Controller do
+  Controller[k] = function(...)
+    if ... == ni then
+      return v(select(2, ...));
+    else
+      return v(...);
+    end
+  end
+end;
+Controller.new = Controller.Create;
+Controller.FromFieldEncoded = Controller.FromFieldEncoded;
+Controller.FromBase64 = Controller.fromB64;
+Controller.fromBase64 = Controller.fromB64;
+Controller.FromB64 = Controller.fromB64;
 mt.__index = Controller;
-mt.__tostring = function() return "Freya BitStream Controller" end
-mt.__metatable = "Locked metatable: Freya";
+mt.__tostring = function()
+  return "Freya BitStream module"
+end;
+mt.__metatable = "Locked Metatable: Freya";
 
-Hybrid = function(...) if ... == ni then return select(2, ...) else return ... end end
-
-return {
-  b64 = enc64;
-  unb64 = dec64;
-  GetBit = bit;
-  GetRangeField = bitRange;
-  GetRange = bitRangeN;
-};
+return ni
