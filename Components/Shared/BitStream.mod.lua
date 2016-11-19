@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 --[[
 
 Based on the BitBuffer module by Stravant

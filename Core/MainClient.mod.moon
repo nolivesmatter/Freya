@@ -24,7 +24,7 @@ IsInstance = do
 Components = {}
 
 with game.ReplicatedStorage.Freya.Components
-  \WaitForChild "Events"
+  .Shared\WaitForChild "Events"
   for v in *.Shared\GetChildren!
     Components[v.Name] = require v
   for v in *.Client\GetChildren!
@@ -33,8 +33,10 @@ with game.ReplicatedStorage.Freya.Components
 ComponentAdded = Components.Events.new!
 
 game.ReplicatedStorage.Freya.Components.DescendantAdded\connect (obj) ->
-  Components[obj.Name] = require obj;
+  Components[obj.Name] = require obj
   ComponentAdded\Fire obj.Name
+  
+STUB = ->
 
 Controller = with {
     GetComponent: Hybrid (ComponentName) ->
@@ -44,7 +46,7 @@ Controller = with {
           component = require component
         return component
       warn "[WARN][Freya Client] Yielding for #{ComponentName}"
-      while ComponentAdded\wait! ~= ComponentName do nothing
+      while ComponentAdded\wait! ~= ComponentName do STUB!
       return Components[ComponentName]
     SetComponent: Hybrid (ComponentName, ComponentValue) ->
       if Components[ComponentName]

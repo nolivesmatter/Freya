@@ -30,6 +30,8 @@ for v in *game.ServerStorage.Freya.Components\GetChildren!
 
 ComponentAdded = Components.Events.new!
 
+STUB = ->
+
 Controller = with {
     GetComponent: Hybrid (ComponentName) ->
       component = Components[ComponentName]
@@ -38,7 +40,7 @@ Controller = with {
           component = require component
         return component
       warn "[WARN][Freya Server] Yielding for #{ComponentName}"
-      while ComponentAdded\wait! ~= ComponentName do nothing
+      while ComponentAdded\wait! ~= ComponentName do STUB!
       return Components[ComponentName]
     SetComponent: Hybrid (ComponentName, ComponentValue) ->
       if Components[ComponentName]

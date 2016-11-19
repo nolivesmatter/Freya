@@ -7,7 +7,7 @@
 Clear = (Location, Name) ->
   obj = Location\FindFirstChild Name
   if obj
-    print "[Freya] Cleaning", obj\GetFullName
+    print "[Freya] Cleaning", obj\GetFullName!
     obj\Destroy!
 
 =>
@@ -16,7 +16,7 @@ Clear = (Location, Name) ->
   RFFreya = with Instance.new "Folder"
     .Name = "Freya"
     .Parent = game.ReplicatedFirst
-  with Instance.new "Folder"
+  with game.ReplicatedFirst\FindFirstChild("FreyaUserscripts") or Instance.new "Folder"
     .Name = "FreyaUserscripts"
     .Parent = game.ReplicatedFirst
   print "[Freya] Unpacking ReplicatedFirst:"
@@ -35,7 +35,7 @@ Clear = (Location, Name) ->
   SSSFreya = with Instance.new "Folder"
     .Name = "Freya"
     .Parent = game.ServerScriptService
-  with Instance.new "Folder"
+  with game.ServerScriptService\FindFirstChild("FreyaUserscripts") or Instance.new "Folder"
     .Name = "FreyaUserscripts"
     .Parent = game.ServerScriptService
   print "[Freya] Unpacking ServerScriptService:"
@@ -55,7 +55,7 @@ Clear = (Location, Name) ->
   SPSFreya = with Instance.new "Folder"
     .Name = "Freya"
     .Parent = game.StarterPlayer.StarterPlayerScripts
-  with Instance.new "Folder"
+  with game.StarterPlayer\FindFirstChild("FreyaUserscripts") or  Instance.new "Folder"
     .Name = "FreyaUserscripts"
     .Parent = game.StarterPlayer.StarterPlayerScripts
   print "[Freya] Unpacking StarterPlayerScripts:"
@@ -151,12 +151,12 @@ Clear = (Location, Name) ->
     .Parent = RSFreya
   @Core.InitServer.Parent = SSSFreya
   @Core.InitClient.Parent = RFFreya
+  @Core.PackageList.Parent = SSFreya
   Clear RSFreya, "Intent"
   print "[Freya] Creating Freya Intent RemoteEvent"
   with Instance.new "RemoteEvent"
     .Name = "Intent"
     .Parent = RSFreya
   @Version.Parent = SSFreya
-  @PackageList.Parent = SSFreya
   @vanish.Parent = SSFreya
   print "[Freya] Finished unpacking Freya"
