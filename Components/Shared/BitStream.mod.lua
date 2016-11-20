@@ -568,40 +568,6 @@ local function Create()
   end
 
   -- FieldEncode/Decode for networking
-  local function bitRange(str, beginBit, endBit)
-      local byte_t = { 1, 2, 4, 8, 16, 32, 64, 128 }
-
-      local beginChar = math.ceil( beginBit/8 )
-      local endChar = math.ceil( endBit/8 )
-      local range = str:sub( beginChar, endChar )
-
-      local bits = {}
-      local beginOffset = beginBit%8 - 1
-      local endOffset = endBit - beginOffset + 1
-
-      for num = 1,#range do
-          local byte = str:sub(num, num):byte()
-          local offset = (num-1)*8 - beginOffset
-
-          for bit=8, 1, -1 do
-              local sub = byte - byte_t[bit]
-              local pos = offset + bit
-
-              if sub >= 0 then
-                  if pos > 0 and pos < endOffset then
-                      bits[pos] = true
-                  end
-                  byte = sub
-              else
-                  if pos > 0 and pos < endOffset then
-                      bits[pos] = false
-                  end
-              end
-          end
-      end
-      return bits
-  end
-
   function FieldEncode()
     local data = ToString();
     local tmp = {};
@@ -652,11 +618,22 @@ local function Create()
   function FieldDecode(data)
     local count = #data:gsub('[^\254]','');
     local bytecount = ceil(count/7); -- Yes, 7.
-    local bits = bitRange(data, 1, bytecount);
-    local _cnt = 1;
+    local bits = sub(data, 1, bytecount);
+    data = sub(data, bytecount+1, -1);
+    local bitt = {};
+    local bitp = 0;
+    for i = 1, bytecount do
+      local ch = byte(bits, i, i);
+      for i = 1, 8 do
+        bitp = bitp + 1
+        bitt[bitp] = ch % 2
+        ch = floor(ch / 2)
+      end
+    end
+    local _cnt = 2;
     data = data:gsub('\254', function(s)
-      local r = bits[_cnt] and '\0' or '\254';
-      if _cnt % 8 == 7 then
+      local r = bitt[_cnt] == 1 and '\0' or '\254';
+      if _cnt % 8 == 0 then
         _cnt = _cnt + 2;
       else
         _cnt = _cnt + 1;
