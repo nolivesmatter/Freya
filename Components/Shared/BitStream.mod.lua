@@ -731,6 +731,8 @@ local function Create()
   this.ReadBit = this.readBit;
   this.FromFieldEncoded = this.FieldDecode;
   this.ToFieldEncoded = this.FieldEncode;
+  this.WriteDouble = this.WriteFloat64;
+  this.ReadDouble = this.ReadFloat64;
 
   return ni
 end;
