@@ -758,7 +758,7 @@ for k,v in next, Controller do
   end
 end;
 Controller.new = Controller.Create;
-Controller.FromFieldEncoded = Controller.FromFieldEncoded;
+Controller.FromFieldEncoded = Controller.fromFieldEncoded;
 Controller.FromBase64 = Controller.fromB64;
 Controller.fromBase64 = Controller.fromB64;
 Controller.FromB64 = Controller.fromB64;
