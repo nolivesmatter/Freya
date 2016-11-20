@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 --[[
 
 Based on the BitBuffer module by Stravant
@@ -100,6 +99,8 @@ Buffer / Position Manipulation
 	BitBuffer:Reset()
 		Will reset the buffer to a clean state, with no contents.
 
+--]]
+
 --[[
 String Encoding:
 	   Char 1   Char 2
@@ -169,7 +170,7 @@ local function Create()
   local Reset, ResetPtr, FromString, ToString, FromBase64, ToBase64, Dump
   local writeBit, readBit, WriteUnsigned, ReadUnsigned, WriteSigned, ReadSigned
   local WriteString, ReadString, WriteBool, ReadBool
-  local WriteFloat, WriteFloat32, WriteFloat32
+  local WriteFloat, WriteFloat32, WriteFloat64
   local ReadFloat, ReadFloat32, ReadFloat64
   local WriteBrickColor, ReadBrickColor, WriteColor3, ReadColor3
   local WriteRotation, ReadRotation, WriteVector3, ReadVector3
@@ -345,7 +346,7 @@ local function Create()
 
   	-- Loop
   	local buffer = {}
-    i = 0;
+    local i = 0;
   	while true do
       i = i+1;
   		local ch = ReadUnsigned(bitWidth)
@@ -529,7 +530,7 @@ local function Create()
   -- Raw stream
   function WriteRaw(length, data)
     for i = 1, floor(length/8) do
-  		local ch = byte(str, i, i)
+  		local ch = byte(data, i, i)
   		for i = 1, 8 do
   			mBitPtr = mBitPtr + 1
   			mBitBuffer[mBitPtr] = ch % 2
@@ -537,7 +538,7 @@ local function Create()
   		end
   	end
     local _i = ceil(length/8);
-    local ch = byte(str, _i, _i);
+    local ch = byte(data, _i, _i);
     for i = 1, length % 8 do
       mBitPtr = mBitPtr + 1;
       mBitBuffer[mBitPtr] = ch % 2;
