@@ -63,6 +63,7 @@ eClass = {
     Handle[@] = f
     return old
 }
+eClass.Connect = eClass.connect
 eClass.Fire = eClass.fire
 eClass.Intercept = eClass.intercept
 eClass.Handle = eClass.handle
@@ -76,6 +77,7 @@ dClass = {
       error "Attempt to disconnect dead connection or invalid connection", 2
   connected: => not not Disconnections[@]
 }
+dClass.Disconnect = dClass.disconnect
 dClass.Connected = dClass.connected
 dClass.IsConnected = dClass.Connected
 
