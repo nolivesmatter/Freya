@@ -6,6 +6,29 @@
 ni = newproxy true
 
 local InstallPackage, UpdatePackage, UninstallPackage, GetPackage
+Http = game\GetService "HttpService"
+GET =  (url, headers) ->
+  local s
+  local r
+  i = 1
+  repeat
+    s, r = pcall Http.GetAsync, Http, url, true, headers
+    i += 1
+  until s or (i > 3) or warn 'HTTP GET failed. Trying again (#{i} of 3)'
+  return error r unless s
+  return r, (select 2, pcall Http.JSONDecode, Http, r)
+POST =  (url, body, headers) ->
+  local s
+  local r
+  i = 1
+  repeat
+    s, r = pcall Http.PostAsync, Http, url, Http\JSONEncode(body), nil, nil, headers
+    i += 1
+  until s or (i > 3) or (warn('HTTP GET failed. Trying again in 5 seconds (#{i} of 3)') and wait(5) and false)
+  return error r unless s
+  return r, (select 2, pcall Http.JSONDecode, Http, r)
+ghroot = "https://api.github.com/"
+  
 
 Hybrid = (f) -> (...) ->
   return f select 2, ... if ... == ni else f ...
@@ -81,14 +104,53 @@ ResolvePackage = Hybrid (Package, Version) ->
         --  Determine protocol
         switch Package\match '^(%w):'
           when 'github'
+            warn "Without authentication, github requests will be heavily ratelimited."
             -- Github-based package.
             -- No extended support (Scripts only)
             -- Count the path
             switch select 2, Package\gsub('/', '')
-              when 2 
-                nil
+              when 1
+                repo = Package\gsub('^github:','')
+                headers = {
+                  Accept: "application/vnd.github.v3+json"
+                  ["User-Agent"]: "CrescentCode/Freya (User #{game.CreatorId})"
+                }
                 -- Repo is package
-              when 3
+                -- Test repo for existance
+                _, j = GET "#{ghroot}repos/#{repo}", headers
+                return nil, "Package repository does not exist: #{Package} (#{j.message})" if j.message
+                -- Get the commit sha
+                -- Branch?
+                if Version
+                  v = ResolveVersion Version
+                  if v.branch 
+                    _, j = GET "#{ghroot}repos/#{repo}/commits?sha=#{v.branch}", headers
+                  else
+                    _, j = GET "#{ghroot}repos/#{repo}/commits", headers
+                else
+                  _, j = GET "#{ghroot}repos/#{repo}/commits", headers
+                return nil, "Failed to get commit details: #{j.message}" if j.message
+                sha = j[1].sha
+                _, j = GET "#{ghroot}repos/#{repo}/git/trees/#{sha}", headers
+                return nil, "Failed to get repo tree: #{j.message}" if j.message
+                _, def = GET "https://raw.githubusercontent.com/#{repo}/FreyaPackage"
+                origin = with Instance.new "ModuleScript"
+                  .Name = "Package"
+                  .Source = "return {\nName = #{def.Name};\nPackage = script['#{def.Package or def.Origin}'];\nVersion = '#{def.Version or Version or sha}';\nType = '#{def.Type}'\n}"
+                for i=1, #j do
+                  v = j[i]
+                  -- Get content of object if it's not a directory.
+                  -- If it's a directory, check if it's masking an Instance.
+                  if v.type == 'tree'
+                    -- Directory
+                    -- Masking?
+                    if v.path\find '%.'
+                      -- Masking.
+                      -- Create as Instance
+                      
+                  else
+                    -- File
+              when 2
                 nil
                 -- Repo is package repo; Get defs from repo
               else
@@ -114,7 +176,7 @@ ResolvePackage = Hybrid (Package, Version) ->
       else
         return nil, "Invalid package format."
 
-CompareVersions = (v1, v2) ->
+CompareVersions = (v1, v2) -> -- To, from
   v1 = ResolveVersion v1.Version
   v2 = ResolveVersion v2.Version
   check = true
@@ -130,6 +192,7 @@ CompareVersions = (v1, v2) ->
   if (v1.major == v2.major) and v1.minor and v2.minor and (v1.minor > v2.minor)
     check = false
     if (v1.minor == v2.minor) and v1.patch and v2.patch and (v1.patch > v2.patch)
+      -- God forbid should you *need* a patch version.
       check = false
   check
 
