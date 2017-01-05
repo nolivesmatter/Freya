@@ -11,20 +11,24 @@ GET =  (url, headers) ->
   local s
   local r
   i = 1
-  repeat
+  while (not s) and i < 3
     s, r = pcall Http.GetAsync, Http, url, true, headers
     i += 1
-  until s or (i > 3) or warn 'HTTP GET failed. Trying again (#{i} of 3)'
+    unless s
+      warn 'HTTP GET failed. Trying again in 5 seconds (#{i} of 3)'
+      wait(5)
   return error r unless s
   return r, (select 2, pcall Http.JSONDecode, Http, r)
 POST =  (url, body, headers) ->
   local s
   local r
   i = 1
-  repeat
+  while (not s) and i < 3
     s, r = pcall Http.PostAsync, Http, url, Http\JSONEncode(body), nil, nil, headers
     i += 1
-  until s or (i > 3) or (warn('HTTP GET failed. Trying again in 5 seconds (#{i} of 3)') and wait(5) and false)
+    unless s
+      warn 'HTTP GET failed. Trying again in 5 seconds (#{i} of 3)'
+      wait(5)
   return error r unless s
   return r, (select 2, pcall Http.JSONDecode, Http, r)
 ghroot = "https://api.github.com/"
