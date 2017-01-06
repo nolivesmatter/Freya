@@ -33,7 +33,14 @@ POST =  (url, body, headers) ->
   return error r unless s
   return r, (select 2, pcall Http.JSONDecode, Http, r)
 ghroot = "https://api.github.com/"
-  
+
+extignore = {
+  "md"
+  "properties"
+  "gitnore"
+  "gitkeep"
+  "gitignore"
+}
 
 Hybrid = (f) -> (...) ->
   return f select 2, ... if ... == ni else f ...
@@ -139,14 +146,28 @@ ResolvePackage = Hybrid (Package, Version) ->
                 sha = j[1].sha
                 _, j = GET "#{ghroot}repos/#{repo}/git/trees/#{sha}", headers
                 return nil, "Failed to get repo tree: #{j.message}" if j.message
-                _, def = GET "https://raw.githubusercontent.com/#{repo}/FreyaPackage"
-                origin = with Instance.new "ModuleScript"
+                _, def = GET "https://raw.githubusercontent.com/#{repo}/#{sha}/FreyaPackage.properties"
+                return nil, "Bad package definition at FreyaPackage.properties" unless def
+                origin = with Instance.new "Folder"
                   .Name = "Package"
-                  .Source = "return {\nName = '#{def.Name}';\nPackage = script['#{def.Package or def.Origin}'];\nVersion = '#{def.Version or Version or sha}';\nType = '#{def.Type}'\n}"
+                otab = {
+                  Name = def.Name
+                  Version = def.Version or Version or sha
+                  Type = def.Type
+                  LoadOrder = def.LoadOrder
+                }
+                if def.Description
+                  print "[Info][Freya Vulcan] (Description for #{repo}):\ndef.Description"
                 for i=1, #j do
                   v = j[i]
                   -- Get content of object if it's not a directory.
                   -- If it's a directory, check if it's masking an Instance.
+                  _,__,ext = v.path\find '$.*/.-%.(.+)^'
+                  ext or= select 3, v.path\find '$[^%.]+%.(.+)^'
+                  ext or= v.path
+                  if extignore[ext]
+                    print "[Info][Freya Vulcan] Skipping #{v.path}"
+                    continue
                   local inst
                   if v.type == 'tree'
                     -- Directory
@@ -155,14 +176,14 @@ ResolvePackage = Hybrid (Package, Version) ->
                       print "[Info][Freya Vulcan] Building #{v.path} as a blank Instance"
                       -- Masking.
                       -- Create as Instance (blank)
-                      inst = switch v.path\match '$.+/.-%.(.+)^'
+                      inst = switch ext
                         when 'mod.lua' then Instance.new "ModuleScript"
                         when 'loc.lua' then Instance.new "LocalScript"
                         when 'lua' then Instance.new "Script"
                       if inst
                         inst.Name = v.path\match '$.+/(.-)%..+^'
                       else
-                        warn "[Warn][Freya Vulcan] Vulcan does not support #{v.path\match '$.+/.-%.(.+)^'} extensions"
+                        warn "[Warn][Freya Vulcan] Vulcan does not support .#{ext} extensions"
                     else
                       print "[Info][Freya Vulcan] Building #{v.path} as a Folder"
                       inst = with Instance.new "Folder"
@@ -176,18 +197,18 @@ ResolvePackage = Hybrid (Package, Version) ->
                         n = t\match '$([^%.]+).+^'
                         unless n == '_'
                           inst = origin[n]
-                      inst.Source = GET "https://raw.githubusercontent.com/#{repo}/#{v.path}"
+                      inst.Source = GET "https://raw.githubusercontent.com/#{repo}/#{sha}/#{v.path}"
                     else
                       print "[Info][Freya Vulcan] Building #{v.path}."
-                      inst = switch v.path\match '$.+/.-%.(.+)^'
+                      inst = switch ext
                         when 'mod.lua' then Instance.new "ModuleScript"
                         when 'loc.lua' then Instance.new "LocalScript"
                         when 'lua' then Instance.new "Script"
                       if inst
                         inst.Name = v.path\match '$.+/(.-)%..+^'
-                        inst.Source = GET "https://raw.githubusercontent.com/#{repo}/#{v.path}"
+                        inst.Source = GET "https://raw.githubusercontent.com/#{repo}/#{sha}/#{v.path}"
                       else
-                        warn "[Warn][Freya Vulcan] Vulcan does not support #{v.path\match '$.+/.-%.(.+)^'} extensions"
+                        warn "[Warn][Freya Vulcan] Vulcan does not support .#{ext} extensions"
                   if inst
                     p = origin
                     if v.path\find('$(.+)/[^/]-^')
@@ -197,6 +218,9 @@ ResolvePackage = Hybrid (Package, Version) ->
                   else
                     print "[Info][Freya Vulcan] Skipping #{v.path}."
                 print "[Info][Freya Vulcan] Loaded #{Package}"
+                otab.Install = def.Install and origin\FindFirstChild def.Install
+                otab.Update = def.Update and origin\FindFirstChild def.Update
+                otab.Uninstall = def.Uninstall and origin\FindFirstChild def.Uninstall
                 return require(origin) -- Why build a modulescript just to get a table?
                 -- Solves issues with install parts expecting a ModuleScript
               when 2
