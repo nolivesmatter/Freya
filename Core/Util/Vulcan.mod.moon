@@ -5,6 +5,7 @@
 
 ni = newproxy true
 
+local ^
 local InstallPackage, UpdatePackage, UninstallPackage, GetPackage
 Http = game\GetService "HttpService"
 GET =  (url, headers) ->
@@ -115,6 +116,7 @@ ResolvePackage = Hybrid (Package, Version) ->
             switch select 2, Package\gsub('/', '')
               when 1
                 repo = Package\gsub('^github:','')
+                print "[Info][Freya Vulcan] Building #{repo} from Github."
                 headers = {
                   Accept: "application/vnd.github.v3+json"
                   ["User-Agent"]: "CrescentCode/Freya (User #{game.CreatorId})"
@@ -140,20 +142,63 @@ ResolvePackage = Hybrid (Package, Version) ->
                 _, def = GET "https://raw.githubusercontent.com/#{repo}/FreyaPackage"
                 origin = with Instance.new "ModuleScript"
                   .Name = "Package"
-                  .Source = "return {\nName = #{def.Name};\nPackage = script['#{def.Package or def.Origin}'];\nVersion = '#{def.Version or Version or sha}';\nType = '#{def.Type}'\n}"
+                  .Source = "return {\nName = '#{def.Name}';\nPackage = script['#{def.Package or def.Origin}'];\nVersion = '#{def.Version or Version or sha}';\nType = '#{def.Type}'\n}"
                 for i=1, #j do
                   v = j[i]
                   -- Get content of object if it's not a directory.
                   -- If it's a directory, check if it's masking an Instance.
+                  local inst
                   if v.type == 'tree'
                     -- Directory
                     -- Masking?
-                    if v.path\find '%.'
+                    if v.path\find '%.lua^' -- No moon support
+                      print "[Info][Freya Vulcan] Building #{v.path} as a blank Instance"
                       -- Masking.
-                      -- Create as Instance
-                      
+                      -- Create as Instance (blank)
+                      inst = switch v.path\match '$.+/.-%.(.+)^'
+                        when 'mod.lua' then Instance.new "ModuleScript"
+                        when 'loc.lua' then Instance.new "LocalScript"
+                        when 'lua' then Instance.new "Script"
+                      if inst
+                        inst.Name = v.path\match '$.+/(.-)%..+^'
+                      else
+                        warn "[Warn][Freya Vulcan] Vulcan does not support #{v.path\match '$.+/.-%.(.+)^'} extensions"
+                    else
+                      print "[Info][Freya Vulcan] Building #{v.path} as a Folder"
+                      inst = with Instance.new "Folder"
+                        .Name = v.path\match '$.+/(.-)%..+^'
                   else
-                    -- File
+                    name = v.path\match '$.+/(.-)%..+^'
+                    if name == '_'
+                      print "[Info][Freya Vulcan] Building #{v.path} as the source to #{v.path\match('^(.+)/[^/]-$')}"
+                      inst = origin
+                      for t in v.path\gmatch '[^/]+'
+                        n = t\match '$([^%.]+).+^'
+                        unless n == '_'
+                          inst = origin[n]
+                      inst.Source = GET "https://raw.githubusercontent.com/#{repo}/#{v.path}"
+                    else
+                      print "[Info][Freya Vulcan] Building #{v.path}."
+                      inst = switch v.path\match '$.+/.-%.(.+)^'
+                        when 'mod.lua' then Instance.new "ModuleScript"
+                        when 'loc.lua' then Instance.new "LocalScript"
+                        when 'lua' then Instance.new "Script"
+                      if inst
+                        inst.Name = v.path\match '$.+/(.-)%..+^'
+                        inst.Source = GET "https://raw.githubusercontent.com/#{repo}/#{v.path}"
+                      else
+                        warn "[Warn][Freya Vulcan] Vulcan does not support #{v.path\match '$.+/.-%.(.+)^'} extensions"
+                  if inst
+                    p = origin
+                    if v.path\find('$(.+)/[^/]-^')
+                      for t in v.path\match('$(.+)/[^/]-^')\gmatch '[^/]+'
+                        p = p[t\match '$([^%.]+).+^']
+                    inst.Parent = p
+                  else
+                    print "[Info][Freya Vulcan] Skipping #{v.path}."
+                print "[Info][Freya Vulcan] Loaded #{Package}"
+                return require(origin) -- Why build a modulescript just to get a table?
+                -- Solves issues with install parts expecting a ModuleScript
               when 2
                 nil
                 -- Repo is package repo; Get defs from repo
@@ -172,7 +217,7 @@ ResolvePackage = Hybrid (Package, Version) ->
         -- We'll assume it's a ModuleScript already. No version check.
         s, err = pcall require, Package
         return nil, "Unable to load package: #{err}" unless s
-        return nil, "Package does not return a table" unless type(s) == 'table'
+        return nil, "Package does not return a table" unless type(err) == 'table'
         return err
       when 'table'
         -- It's a boy! No version check.
