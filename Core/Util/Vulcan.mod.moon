@@ -274,7 +274,7 @@ Vulcan = {
     -- Will invoke Update too, but also installs.
     apkg = Package
     -- Resolve the package
-    Package, err = ResolvePackage Package
+    Package, err = ResolvePackage Package, Version
     return error "[Error][Freya Vulcan] Unable to install package: \"#{err}\"", 2 unless Package
     with Package
       assert .Type,
@@ -346,7 +346,7 @@ Vulcan = {
   UpdatePackage: Hybrid (Package, Version) ->
     apkg = Package
     -- Resolve the package
-    Package, err = ResolvePackage Package
+    Package, err = ResolvePackage Package, Version
     return error "[Error][Freya Vulcan] Unable to update package: \"#{err}\"", 2 unless Package
     with Package
       assert .Type,
