@@ -7,40 +7,8 @@ ni = newproxy true
 
 local ^
 local InstallPackage, UpdatePackage, UninstallPackage, GetPackage
-Http = game\GetService "HttpService"
-GET =  (url, headers) ->
-  local s
-  local r
-  i = 1
-  while (not s) and i < 3
-    s, r = pcall Http.GetAsync, Http, url, true, headers
-    i += 1
-    unless s
-      warn 'HTTP GET failed. Trying again in 5 seconds (#{i} of 3)'
-      wait(5)
-  return error r unless s
-  return r, (select 2, pcall Http.JSONDecode, Http, r)
-POST =  (url, body, headers) ->
-  local s
-  local r
-  i = 1
-  while (not s) and i < 3
-    s, r = pcall Http.PostAsync, Http, url, Http\JSONEncode(body), nil, nil, headers
-    i += 1
-    unless s
-      warn 'HTTP GET failed. Trying again in 5 seconds (#{i} of 3)'
-      wait(5)
-  return error r unless s
-  return r, (select 2, pcall Http.JSONDecode, Http, r)
-ghroot = "https://api.github.com/"
 
-extignore = {
-  "md"
-  "properties"
-  "gitnore"
-  "gitkeep"
-  "gitignore"
-}
+GitFetch = require(script.Parent.GitFetch)
 
 Hybrid = (f) -> (...) ->
   return f select 2, ... if ... == ni else f ...
@@ -57,7 +25,7 @@ Locate = (Type) ->
     when 'LiteLibrary' then game.ReplicatedStorage.Freya.LiteLibraries
     when 'Util' then game.ServerStorage.Freya.Util
     else error "Invalid Type for package!", 3
-    
+
 PackageModule = script.Parent.Parent.PackageList
 Packages = require PackageModule
 Flush = ->
@@ -78,7 +46,7 @@ Origin = {
     .Source = table.concat Buffer, ''
     .Name = 'PackageList'
     .Parent = script.Parent.Parent
-    
+
 ResolveVersion = Hybrid (Version) ->
     i,j,branch,major,minor,patch = Version\find("^(%a[%w_-]*)%.(%d+)%.?(%d*)%.?(%d*)$")
     if i
@@ -119,124 +87,18 @@ ResolvePackage = Hybrid (Package, Version) ->
             warn "Without authentication, github requests will be heavily ratelimited."
             -- Github-based package.
             -- No extended support (Scripts only)
-            -- Count the path
-            switch select 2, Package\gsub('/', '')
-              when 1
-                repo = Package\gsub('^github:','')
-                print "[Info][Freya Vulcan] Building #{repo} from Github."
-                headers = {
-                  Accept: "application/vnd.github.v3+json"
-                  ["User-Agent"]: "CrescentCode/Freya (User #{game.CreatorId})"
-                }
-                -- Repo is package
-                -- Test repo for existance
-                _, j = GET "#{ghroot}repos/#{repo}", headers
-                return nil, "Package repository does not exist: #{Package} (#{j.message})" if j.message
-                -- Get the commit sha
-                -- Branch?
-                if Version
-                  v = ResolveVersion Version
-                  if v.branch 
-                    _, j = GET "#{ghroot}repos/#{repo}/commits?sha=#{v.branch}", headers
-                  else
-                    _, j = GET "#{ghroot}repos/#{repo}/commits", headers
-                else
-                  _, j = GET "#{ghroot}repos/#{repo}/commits", headers
-                return nil, "Failed to get commit details: #{j.message}" if j.message
-                sha = j[1].sha
-                _, j = GET "#{ghroot}repos/#{repo}/git/trees/#{sha}", headers
-                return nil, "Failed to get repo tree: #{j.message}" if j.message
-                _, def = GET "https://raw.githubusercontent.com/#{repo}/#{sha}/FreyaPackage.properties"
-                return nil, "Bad package definition at FreyaPackage.properties" unless def
-                origin = with Instance.new "Folder"
-                  .Name = "Package"
-                otab = {
-                  Name = def.Name
-                  Version = def.Version or Version or sha
-                  Type = def.Type
-                  LoadOrder = def.LoadOrder
-                }
-                if def.Description
-                  print "[Info][Freya Vulcan] (Description for #{repo}):\ndef.Description"
-                for i=1, #j do
-                  v = j[i]
-                  -- Get content of object if it's not a directory.
-                  -- If it's a directory, check if it's masking an Instance.
-                  _,__,ext = v.path\find '$.*/.-%.(.+)^'
-                  ext or= select 3, v.path\find '$[^%.]+%.(.+)^'
-                  ext or= v.path
-                  if extignore[ext]
-                    print "[Info][Freya Vulcan] Skipping #{v.path}"
-                    continue
-                  local inst
-                  if v.type == 'tree'
-                    -- Directory
-                    -- Masking?
-                    if v.path\find '%.lua^' -- No moon support
-                      print "[Info][Freya Vulcan] Building #{v.path} as a blank Instance"
-                      -- Masking.
-                      -- Create as Instance (blank)
-                      inst = switch ext
-                        when 'mod.lua' then Instance.new "ModuleScript"
-                        when 'loc.lua' then Instance.new "LocalScript"
-                        when 'lua' then Instance.new "Script"
-                      if inst
-                        inst.Name = v.path\match '$.+/(.-)%..+^'
-                      else
-                        warn "[Warn][Freya Vulcan] Vulcan does not support .#{ext} extensions"
-                    else
-                      print "[Info][Freya Vulcan] Building #{v.path} as a Folder"
-                      inst = with Instance.new "Folder"
-                        .Name = v.path\match '$.+/(.-)%..+^'
-                  else
-                    name = v.path\match '$.+/(.-)%..+^'
-                    if name == '_'
-                      print "[Info][Freya Vulcan] Building #{v.path} as the source to #{v.path\match('^(.+)/[^/]-$')}"
-                      inst = origin
-                      for t in v.path\gmatch '[^/]+'
-                        n = t\match '$([^%.]+).+^'
-                        unless n == '_'
-                          inst = origin[n]
-                      inst.Source = GET "https://raw.githubusercontent.com/#{repo}/#{sha}/#{v.path}"
-                    else
-                      print "[Info][Freya Vulcan] Building #{v.path}."
-                      inst = switch ext
-                        when 'mod.lua' then Instance.new "ModuleScript"
-                        when 'loc.lua' then Instance.new "LocalScript"
-                        when 'lua' then Instance.new "Script"
-                      if inst
-                        inst.Name = v.path\match '$.+/(.-)%..+^'
-                        inst.Source = GET "https://raw.githubusercontent.com/#{repo}/#{sha}/#{v.path}"
-                      else
-                        warn "[Warn][Freya Vulcan] Vulcan does not support .#{ext} extensions"
-                  if inst
-                    p = origin
-                    if v.path\find('$(.+)/[^/]-^')
-                      for t in v.path\match('$(.+)/[^/]-^')\gmatch '[^/]+'
-                        p = p[t\match '$([^%.]+).+^']
-                    inst.Parent = p
-                  else
-                    print "[Info][Freya Vulcan] Skipping #{v.path}."
-                print "[Info][Freya Vulcan] Loaded #{Package}"
-                otab.Install = def.Install and origin\FindFirstChild def.Install
-                otab.Update = def.Update and origin\FindFirstChild def.Update
-                otab.Uninstall = def.Uninstall and origin\FindFirstChild def.Uninstall
-                return require(origin) -- Why build a modulescript just to get a table?
-                -- Solves issues with install parts expecting a ModuleScript
-              when 2
-                nil
-                -- Repo is package repo; Get defs from repo
-              else
-                return nil, "Invalid Github package protocol"
+            repo = Package\gsub('^github:','')
+            print "[Info][Freya Vulcan] Building #{repo} from Github."
+            return GitFetch.GetPackage repo
           when 'freya'
             -- Freya-based package.
             -- No Freya APIs available for getting this data yet
-            nil
+            nil, "Freya repo APIs are not available yet"
           else
             -- Unknown protocol or no protocol.
             -- Assume Freya packages or Github packages.
             -- Check existing package repo list.
-            nil
+            nil, "No resolver available for #{Package}"
       when 'userdata'
         -- We'll assume it's a ModuleScript already. No version check.
         s, err = pcall require, Package
