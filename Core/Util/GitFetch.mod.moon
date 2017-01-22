@@ -109,7 +109,7 @@ GetPackage = (path, Version) ->
         if v.type == 'tree'
           -- Directory
           -- Masking?
-          if v.path\find '%.lua^' -- No moon support
+          if v.path\find '%.lua$' -- No moon support
             print "[Info][Freya GitFetch] Building #{v.path} as a blank Instance"
             -- Masking.
             -- Create as Instance (blank)
@@ -118,13 +118,19 @@ GetPackage = (path, Version) ->
               when 'loc.lua' then Instance.new "LocalScript"
               when 'lua' then Instance.new "Script"
             if inst
-              inst.Name = v.path\match '^.+/(.-)%..+$'
+              inst.Name = do
+                n = select 3, v.path\find '^.+/(.-)%..+$'
+                n or= select 3, v.path\find '^([^%.]+)%..+$'
+                n
             else
               warn "[Warn][Freya GitFetch] GitFetch does not support .#{ext} extensions"
           else
             print "[Info][Freya GitFetch] Building #{v.path} as a Folder"
             inst = with Instance.new "Folder"
-              .Name = v.path\match '^.+/(.-)%..+$'
+              .Name do
+                n = select 3, v.path\find '^.+/(.-)%..+$'
+                n or= select 3, v.path\find '^([^%.]+)%..+$'
+                n
         else
           name = v.path\match '^.+/(.-)%..+$'
           if name == '_'
@@ -142,7 +148,10 @@ GetPackage = (path, Version) ->
               when 'loc.lua' then Instance.new "LocalScript"
               when 'lua' then Instance.new "Script"
             if inst
-              inst.Name = v.path\match '^.+/(.-)%..+$'
+              inst.Name = do
+                n = select 3, v.path\find '^.+/(.-)%..+$'
+                n or= select 3, v.path\find '^([^%.]+)%..+$'
+                n
               inst.Source = GET "#{ghraw}#{repo}/#{sha}/#{v.path}"
             else
               warn "[Warn][Freya GitFetch] GitFetch does not support .#{ext} extensions"
