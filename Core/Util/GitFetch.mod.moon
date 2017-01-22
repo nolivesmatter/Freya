@@ -94,6 +94,7 @@ GetPackage = (path, Version) ->
       }
       if def.Description
         print "[Info][Freya GitFetch] (Description for #{repo}):\ndef.Description"
+      j = j.tree
       for i=1, #j do
         v = j[i]
         -- Get content of object if it's not a directory.
@@ -153,7 +154,7 @@ GetPackage = (path, Version) ->
           inst.Parent = p
         else
           print "[Info][Freya GitFetch] Skipping #{v.path}."
-      print "[Info][Freya GitFetch] Loaded #{Package}"
+      print "[Info][Freya GitFetch] Loaded #{path}"
       otab.Install = def.Install and origin\FindFirstChild def.Install
       otab.Update = def.Update and origin\FindFirstChild def.Update
       otab.Uninstall = def.Uninstall and origin\FindFirstChild def.Uninstall
