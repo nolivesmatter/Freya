@@ -28,7 +28,7 @@ GET =  (url, headers) ->
     s, r = pcall Http.GetAsync, Http, url, true, headers
     i += 1
     unless s
-      warn 'HTTP GET failed. Trying again in 5 seconds (#{i} of 3)'
+      warn "HTTP GET failed. Trying again in 5 seconds (#{i} of 3)"
       wait(5)
   return error r unless s
   return r, (select 2, pcall Http.JSONDecode, Http, r)
@@ -40,7 +40,7 @@ POST =  (url, body, headers) ->
     s, r = pcall Http.PostAsync, Http, url, Http\JSONEncode(body), nil, nil, headers
     i += 1
     unless s
-      warn 'HTTP GET failed. Trying again in 5 seconds (#{i} of 3)'
+      warn "HTTP GET failed. Trying again in 5 seconds (#{i} of 3)"
       wait(5)
   return error r unless s
   return r, (select 2, pcall Http.JSONDecode, Http, r)
@@ -55,7 +55,7 @@ extignore = {
   "gitignore"
 }
 
-GetPackage = (path) ->
+GetPackage = (path, Version) ->
   ptype = select 2, path\gsub('/', '')
   switch ptype
     when 1
@@ -64,6 +64,7 @@ GetPackage = (path) ->
         --["User-Agent"]: "CrescentCode/Freya (User #{game.CreatorId})"
       }
       -- Test repo for existance
+      repo = path -- Old code migration
       _, j = GET "#{ghroot}repos/#{repo}", headers
       return nil, "Package repository does not exist: #{Package} (#{j.message})" if j.message
       -- Get the commit sha
