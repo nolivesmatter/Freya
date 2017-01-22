@@ -279,7 +279,7 @@ Vulcan = {
     apkg = Package
     -- Resolve the package
     Package, err = ResolvePackage Package
-    return error "[Error][Freya Vulcan] Unable to install package: #{err}", 2 unless Package
+    return error "[Error][Freya Vulcan] Unable to uninstall package: #{err}", 2 unless Package
     with Package
       assert .Type,
         "[Error][Freya Vulcan] Package file does not include a valid type for the package.",
