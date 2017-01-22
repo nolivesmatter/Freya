@@ -18,7 +18,7 @@ Controller = with {
       -- Update Freya
       -- Come back later when you can determine whether Freya is beta/bleeding/etc
       -- Or if you decide not to use that model for Freya
-      return require(480740831);
+      return require(480740831)
     UpdatePackage: Hybrid (Package, Version) ->
       -- Update a package.
       s, err = pcall Vulcan.UpdatePackage, Package, Version
