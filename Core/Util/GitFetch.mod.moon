@@ -99,8 +99,8 @@ GetPackage = (path, Version) ->
         v = j[i]
         -- Get content of object if it's not a directory.
         -- If it's a directory, check if it's masking an Instance.
-        _,__,ext = v.path\find '$.*/.-%.(.+)^'
-        ext or= select 3, v.path\find '$[^%.]+%.(.+)^'
+        _,__,ext = v.path\find '^.*/.-%.(.+)$'
+        ext or= select 3, v.path\find '^[^%.]+%.(.+)$'
         ext or= v.path
         if extignore[ext]
           print "[Info][Freya GitFetch] Skipping #{v.path}"
@@ -118,20 +118,20 @@ GetPackage = (path, Version) ->
               when 'loc.lua' then Instance.new "LocalScript"
               when 'lua' then Instance.new "Script"
             if inst
-              inst.Name = v.path\match '$.+/(.-)%..+^'
+              inst.Name = v.path\match '^.+/(.-)%..+$'
             else
               warn "[Warn][Freya GitFetch] GitFetch does not support .#{ext} extensions"
           else
             print "[Info][Freya GitFetch] Building #{v.path} as a Folder"
             inst = with Instance.new "Folder"
-              .Name = v.path\match '$.+/(.-)%..+^'
+              .Name = v.path\match '^.+/(.-)%..+$'
         else
-          name = v.path\match '$.+/(.-)%..+^'
+          name = v.path\match '^.+/(.-)%..+$'
           if name == '_'
             print "[Info][Freya GitFetch] Building #{v.path} as the source to #{v.path\match('^(.+)/[^/]-$')}"
             inst = origin
             for t in v.path\gmatch '[^/]+'
-              n = t\match '$([^%.]+).+^'
+              n = t\match '^([^%.]+).+$'
               unless n == '_'
                 inst = origin[n]
             inst.Source = GET "#{ghraw}#{repo}/#{sha}/#{v.path}"
@@ -142,15 +142,15 @@ GetPackage = (path, Version) ->
               when 'loc.lua' then Instance.new "LocalScript"
               when 'lua' then Instance.new "Script"
             if inst
-              inst.Name = v.path\match '$.+/(.-)%..+^'
+              inst.Name = v.path\match '^.+/(.-)%..+$'
               inst.Source = GET "#{ghraw}#{repo}/#{sha}/#{v.path}"
             else
               warn "[Warn][Freya GitFetch] GitFetch does not support .#{ext} extensions"
         if inst
           p = origin
-          if v.path\find('$(.+)/[^/]-^')
-            for t in v.path\match('$(.+)/[^/]-^')\gmatch '[^/]+'
-              p = p[t\match '$([^%.]+).+^']
+          if v.path\find('^(.+)/[^/]-$')
+            for t in v.path\match('^(.+)/[^/]-$')\gmatch '[^/]+'
+              p = p[t\match '^([^%.]+).+$']
           inst.Parent = p
         else
           print "[Info][Freya GitFetch] Skipping #{v.path}."
