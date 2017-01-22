@@ -61,7 +61,7 @@ GetPackage = (path) ->
     when 1
       headers = {
         Accept: "application/vnd.github.v3+json"
-        ["User-Agent"]: "CrescentCode/Freya (User #{game.CreatorId})"
+        --["User-Agent"]: "CrescentCode/Freya (User #{game.CreatorId})"
       }
       -- Test repo for existance
       _, j = GET "#{ghroot}repos/#{repo}", headers
