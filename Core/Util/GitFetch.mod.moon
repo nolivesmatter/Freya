@@ -83,6 +83,7 @@ GetPackage = (path, Version) ->
       return nil, "Failed to get repo tree: #{j.message}" if j.message
       _, def = GET "#{ghraw}#{repo}/#{sha}/FreyaPackage.properties"
       return nil, "Bad package definition at FreyaPackage.properties" unless def
+      return nil, "Malformed package definition at FreyaPackage.properties" unless def.Type and def.Package
       origin = with Instance.new "Folder"
         .Name = "Package"
       otab = {
@@ -156,6 +157,7 @@ GetPackage = (path, Version) ->
       otab.Install = def.Install and origin\FindFirstChild def.Install
       otab.Update = def.Update and origin\FindFirstChild def.Update
       otab.Uninstall = def.Uninstall and origin\FindFirstChild def.Uninstall
+      otab.Package = origin\FindFirstChild def.Package
       return otab
 
 Interface = {
