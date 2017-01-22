@@ -82,7 +82,7 @@ ResolvePackage = Hybrid (Package, Version) ->
         return package
       when 'string'
         --  Determine protocol
-        switch Package\match '^(%w):'
+        switch Package\match '^(%w+):'
           when 'github'
             warn "Without authentication, github requests will be heavily ratelimited."
             -- Github-based package.
