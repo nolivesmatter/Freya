@@ -158,6 +158,9 @@ GetPackage = (path, Version) ->
       otab.Install = def.Install and origin\FindFirstChild def.Install
       otab.Update = def.Update and origin\FindFirstChild def.Update
       otab.Uninstall = def.Uninstall and origin\FindFirstChild def.Uninstall
+      otab.Install and= loadstring otab.Install.Source
+      otab.Update and= loadstring otab.Update.Source
+      otab.Uninstall and= loadstring otab.Uninstall.Source
       otab.Package = origin\FindFirstChild def.Package
       return otab
 
