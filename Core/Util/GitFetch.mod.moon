@@ -86,10 +86,10 @@ GetPackage = (path) ->
       origin = with Instance.new "Folder"
         .Name = "Package"
       otab = {
-        Name = def.Name
-        Version = def.Version or Version or sha
-        Type = def.Type
-        LoadOrder = def.LoadOrder
+        Name: def.Name
+        Version: def.Version or Version or sha
+        Type: def.Type
+        LoadOrder: def.LoadOrder
       }
       if def.Description
         print "[Info][Freya GitFetch] (Description for #{repo}):\ndef.Description"
