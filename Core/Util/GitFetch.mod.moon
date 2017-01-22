@@ -56,14 +56,13 @@ extignore = {
 }
 
 GetPackage = (path) ->
-  ptype = select 2, Package\gsub('/', '')
+  ptype = select 2, path\gsub('/', '')
   switch ptype
     when 1
       headers = {
         Accept: "application/vnd.github.v3+json"
         ["User-Agent"]: "CrescentCode/Freya (User #{game.CreatorId})"
       }
-      -- Repo is package
       -- Test repo for existance
       _, j = GET "#{ghroot}repos/#{repo}", headers
       return nil, "Package repository does not exist: #{Package} (#{j.message})" if j.message
