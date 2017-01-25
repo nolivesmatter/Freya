@@ -24,6 +24,7 @@ Locate = (Type) ->
     when 'Library' then game.ReplicatedStorage.Freya.Libraries
     when 'LiteLibrary' then game.ReplicatedStorage.Freya.LiteLibraries
     when 'Util' then game.ServerStorage.Freya.Util
+    when 'Resource' then nil
     else error "Invalid Type for package!", 3
 
 PackageModule = script.Parent.Parent.PackageList
@@ -176,7 +177,6 @@ Vulcan = {
             s, err = pcall InstallPackage dep.Origin or dep.Name, dep.Version
             return error "[Error][Freya Vulcan] Failed to install dependency #{dep.Name} #{dep.Version} because \"#{err}\"", 2 unless s
             print "[Info][Freya Vulcan] Installed dependency #{dep.Name} #{dep.Version or 'latest'}"
-      pkgloc = Locate .Type
       opkg = pkgloc\FindFirstChild .Package.Name
       if opkg
         return error "[Error][Freya Vulcan] Unable to install package because it already exists." unless force
@@ -184,8 +184,8 @@ Vulcan = {
           .Update opkg, Package
           warn "[Warn][Freya Vulcan] Updating #{.Name or .Package.Name} before an install."
         opkg\Destroy!
-      .Package.Parent = pkgloc
       if .Install then .Install Package
+      if pkgloc then .Package.Parent = pkgloc
       if .Package\IsA "Script"
         -- Sort out other package metadata for Scripts
         pak = .Package
@@ -251,7 +251,7 @@ Vulcan = {
             print "[Info][Freya Vulcan] Installed dependency #{dep.Name} #{dep.Version or 'latest'}"
       if .Update then .Update opkg, Package
       opkg\Destroy!
-      .Package.Parent = pkgloc
+      if pkgloc then .Package.Parent = pkgloc
       if .Package\IsA "Script"
       -- Sort out other package metadata for Scripts
         pak = .Package
@@ -291,12 +291,18 @@ Vulcan = {
         .Name = .Package.Name
       pkgloc = Locate .Type
       ipkgloc = Locate .Type
-      ipkg = ipkgloc\FindFirstChild .Name
-      assert ipkg,
-        "[Error][Freya Vulcan] Package could not be located",
-        2
-      if .Uninstall then .Uninstall ipkg, Package
-      ipkg\Destroy!
+      if ipkgloc
+        ipkg = ipkgloc\FindFirstChild .Name
+        assert ipkg,
+          "[Error][Freya Vulcan] Package could not be located",
+          2
+          if .Uninstall then .Uninstall ipkg, Package
+          ipkg\Destroy!
+      else
+        if .Uninstall
+          .Uninstall Package
+        else
+          error "[Error][Freya Vulcan] Package has no uninstall but a type 'Resource'", 2
       dest = false
       for i=1, #Packages
         v = Packages[i]
