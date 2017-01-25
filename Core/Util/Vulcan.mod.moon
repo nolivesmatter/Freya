@@ -5,7 +5,10 @@
 
 ni = newproxy true
 
+local ^
 local InstallPackage, UpdatePackage, UninstallPackage, GetPackage
+
+GitFetch = require(script.Parent.GitFetch)
 
 Hybrid = (f) -> (...) ->
   return f select 2, ... if ... == ni else f ...
@@ -79,34 +82,28 @@ ResolvePackage = Hybrid (Package, Version) ->
         return package
       when 'string'
         --  Determine protocol
-        switch Package\match '^(%w):'
+        switch Package\match '^(%w+):'
           when 'github'
+            warn "Without authentication, github requests will be heavily ratelimited."
             -- Github-based package.
             -- No extended support (Scripts only)
-            -- Count the path
-            switch select 2, Package\gsub('/', '')
-              when 2
-                nil
-                -- Repo is package
-              when 3
-                nil
-                -- Repo is package repo; Get defs from repo
-              else
-                return nil, "Invalid Github package protocol"
+            repo = Package\gsub('^github:','')
+            print "[Info][Freya Vulcan] Building #{repo} from Github."
+            return GitFetch.GetPackage repo
           when 'freya'
             -- Freya-based package.
             -- No Freya APIs available for getting this data yet
-            nil
+            nil, "Freya repo APIs are not available yet"
           else
             -- Unknown protocol or no protocol.
             -- Assume Freya packages or Github packages.
             -- Check existing package repo list.
-            nil
+            nil, "No resolver available for #{Package}"
       when 'userdata'
         -- We'll assume it's a ModuleScript already. No version check.
         s, err = pcall require, Package
         return nil, "Unable to load package: #{err}" unless s
-        return nil, "Package does not return a table" unless type(s) == 'table'
+        return nil, "Package does not return a table" unless type(err) == 'table'
         return err
       when 'table'
         -- It's a boy! No version check.
@@ -114,7 +111,7 @@ ResolvePackage = Hybrid (Package, Version) ->
       else
         return nil, "Invalid package format."
 
-CompareVersions = (v1, v2) ->
+CompareVersions = (v1, v2) -> -- To, from
   v1 = ResolveVersion v1.Version
   v2 = ResolveVersion v2.Version
   check = true
@@ -130,6 +127,7 @@ CompareVersions = (v1, v2) ->
   if (v1.major == v2.major) and v1.minor and v2.minor and (v1.minor > v2.minor)
     check = false
     if (v1.minor == v2.minor) and v1.patch and v2.patch and (v1.patch > v2.patch)
+      -- God forbid should you *need* a patch version.
       check = false
   check
 
@@ -138,7 +136,7 @@ Vulcan = {
     -- Will invoke Update too, but also installs.
     apkg = Package
     -- Resolve the package
-    Package, err = ResolvePackage Package
+    Package, err = ResolvePackage Package, Version
     return error "[Error][Freya Vulcan] Unable to install package: \"#{err}\"", 2 unless Package
     with Package
       assert .Type,
@@ -210,7 +208,7 @@ Vulcan = {
   UpdatePackage: Hybrid (Package, Version) ->
     apkg = Package
     -- Resolve the package
-    Package, err = ResolvePackage Package
+    Package, err = ResolvePackage Package, Version
     return error "[Error][Freya Vulcan] Unable to update package: \"#{err}\"", 2 unless Package
     with Package
       assert .Type,
@@ -281,7 +279,7 @@ Vulcan = {
     apkg = Package
     -- Resolve the package
     Package, err = ResolvePackage Package
-    return error "[Error][Freya Vulcan] Unable to install package: #{err}", 2 unless Package
+    return error "[Error][Freya Vulcan] Unable to uninstall package: #{err}", 2 unless Package
     with Package
       assert .Type,
         "[Error][Freya Vulcan] Package file does not include a valid type for the package.",

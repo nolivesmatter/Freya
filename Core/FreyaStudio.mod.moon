@@ -11,17 +11,17 @@ Vulcan = require script.Parent.Util.Vulcan
 Controller = with {
     InstallPackage: Hybrid (Package, Version) ->
       -- Install a package.
-      s, err = pcall Vulcan.InstallPackage Package, Version
+      s, err = pcall Vulcan.InstallPackage, Package, Version
       return error "[Error][Freya Studio] Unable to install package - '#{err}'" unless s
       print "[Info][Freya Studio] Successfully installed #{Package}"
     Update: ->
       -- Update Freya
       -- Come back later when you can determine whether Freya is beta/bleeding/etc
       -- Or if you decide not to use that model for Freya
-      return nil
+      return require(480740831)
     UpdatePackage: Hybrid (Package, Version) ->
       -- Update a package.
-      s, err = pcall Vulcan.UpdatePackage Package, Version
+      s, err = pcall Vulcan.UpdatePackage, Package, Version
       return error "[Error][Freya Studio] Unable to update package - '#{err}'" unless s
       print "[Info][Freya Studio] Succcessfully updated #{Package}"
     GetPackages: ->
@@ -41,7 +41,7 @@ Controller = with {
       return require mod
     UninstallPackage: Hybrid (Package) ->
       -- Use the package uninstall script or use metadata
-      s, err = pcall Vulcan.UninstallPackage Package
+      s, err = pcall Vulcan.UninstallPackage, Package
       return error "[Error][Freya Studio] Unable to remove package - '#{err}'" unless s
       print "[Info][Freya Studio] Succcessfully uninstalled #{Package}"
     Uninstall: ->
