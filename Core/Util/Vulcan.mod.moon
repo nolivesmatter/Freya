@@ -22,7 +22,7 @@ Locate = (Type) ->
     when 'LiteLibrary' then game.ReplicatedStorage.Freya.LiteLibraries
     when 'Util' then game.ServerStorage.Freya.Util
     else error "Invalid Type for package!", 3
-    
+
 PackageModule = script.Parent.Parent.PackageList
 Packages = require PackageModule
 Flush = ->
@@ -43,7 +43,7 @@ Origin = {
     .Source = table.concat Buffer, ''
     .Name = 'PackageList'
     .Parent = script.Parent.Parent
-    
+
 ResolveVersion = Hybrid (Version) ->
     i,j,branch,major,minor,patch = Version\find("^(%a[%w_-]*)%.(%d+)%.?(%d*)%.?(%d*)$")
     if i
@@ -85,7 +85,7 @@ ResolvePackage = Hybrid (Package, Version) ->
             -- No extended support (Scripts only)
             -- Count the path
             switch select 2, Package\gsub('/', '')
-              when 2 
+              when 2
                 nil
                 -- Repo is package
               when 3
@@ -183,11 +183,11 @@ Vulcan = {
       if opkg
         return error "[Error][Freya Vulcan] Unable to install package because it already exists." unless force
         if .Update
-          .Update opkg, .Package
+          .Update opkg, Package
           warn "[Warn][Freya Vulcan] Updating #{.Name or .Package.Name} before an install."
         opkg\Destroy!
       .Package.Parent = pkgloc
-      if .Install then .Install .Package
+      if .Install then .Install Package
       if .Package\IsA "Script"
         -- Sort out other package metadata for Scripts
         pak = .Package
@@ -251,7 +251,7 @@ Vulcan = {
             s, err = pcall InstallPackage dep.Origin or dep.Name, dep.Version
             return error "[Error][Freya Vulcan] Failed to install dependency #{dep.Name} #{dep.Version} because \"#{err}\"", 2 unless s
             print "[Info][Freya Vulcan] Installed dependency #{dep.Name} #{dep.Version or 'latest'}"
-      if .Update then .Update opkg, .Package
+      if .Update then .Update opkg, Package
       opkg\Destroy!
       .Package.Parent = pkgloc
       if .Package\IsA "Script"
@@ -297,7 +297,7 @@ Vulcan = {
       assert ipkg,
         "[Error][Freya Vulcan] Package could not be located",
         2
-      if .Uninstall then .Uninstall ipkg
+      if .Uninstall then .Uninstall ipkg, Package
       ipkg\Destroy!
       dest = false
       for i=1, #Packages
