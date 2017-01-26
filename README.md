@@ -9,8 +9,9 @@ Freya is a framework and template for developing with Roblox. Everything which F
 - [Powerful permissions](https://docs.cresentcode.net/Freya/Components/Permissions)
 - [Stateful Input](https://docs.crescentcode.net/Freya/Components/Input)
 - [Valkyrie](https://valkyrie.crescentcode.net/) support
-- [Package management](https://docs.crescentcode.net/Freya/Core/Hearth)
+- [Package management](https://docs.crescentcode.net/Freya/Core/Vulcan)
 - Magical seamless wrappers ([BaseLib](https://docs.crescentcode.net/Freya/Libraries) and [LiteLib](https://docs.crescentcode.net/Freya/LiteLibraries))
+- [Bit stream manipulation](https://docs.crescentcode.net/Freya/Components/BitStream)
 
 ### Planned features
 
@@ -31,11 +32,11 @@ Currently, adding Freya to your game is simple: Because there are no branches to
 
 All active modules will have a BoolValue in them called `Enabled`. Ticking the checkbox in it will enable the module and it will load and run automatically, providing control through the configuration, and providing API through Intents.
 
-All passive modules can be loaded via the main Freya controller, or by requiring them manually. Their settings are handled via `Freya.Settings` in the relevant section.
+All passive modules can be loaded via the main Freya controller, or by requiring them manually. Their settings should handled via `Freya.Settings` in the relevant section, when available.
 
 ### Uninstalling Freya
 
-Didn't like Freya? That's a shame. You can currently find a small uninstalling script in `game.ServerStorage.Freya.vanish`, which should completely clear Freya from your game. It will not retain any Freya settings, and if you need to install Freya again you'll have to install it from scratch.
+Didn't like Freya? That's a shame. If you have FreyaStudio loaded, you can do `_G.Freya.Uninstall()` and it will clean up Freya for you. If you don't have FreyaStudio injected, you can load it with `require(game.ServerStorage.Freya.FreyaStudio)`.
 
 ## Why use Freya?
 
@@ -55,3 +56,5 @@ You would probably benefit from using Freya if you are:
 Freya (Freyja, traditionally) is the Norse god of a lot of things, but mostly the reason Freya was chosen is due to her relationship with valkyries, which made it a suitable name for the successor of the development section of [Valkyrie](https://github.com/CrescentCode/ValkyrieFramework)
 
 ## Acknowledgements
+
+- Freya BitStream uses a modified version of the [BitBuffer](https://www.roblox.com/library/174612085/BitBuffer-Module) module by [Stravant](https://www.roblox.com/users/80119/profile/). 
