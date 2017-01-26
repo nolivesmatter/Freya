@@ -195,10 +195,10 @@ Vulcan = {
             .Name = "LoadOrder"
             .Value = lo
             .Parent = pak
-          with Instance.new "BoolValue"
-            .Name = "Enabled"
-            .Value = true
-            .Parent = pak
+        with Instance.new "BoolValue"
+          .Name = "Enabled"
+          .Value = true
+          .Parent = pak
       sav = {
         Resource: .Package
         Origin:
