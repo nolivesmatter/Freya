@@ -296,8 +296,8 @@ Vulcan = {
         assert ipkg,
           "[Error][Freya Vulcan] Package could not be located",
           2
-          if .Uninstall then .Uninstall ipkg, Package
-          ipkg\Destroy!
+        if .Uninstall then .Uninstall ipkg, Package
+        ipkg\Destroy!
       else
         if .Uninstall
           .Uninstall Package
