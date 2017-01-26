@@ -64,15 +64,14 @@ with getmetatable ni
   .__metatable = "Locked Metatable: Freya"
 
 -- Load me in Scotty
-export Freya = ni
 _G.Freya = ni
-export InstallPackage = ni.InstallPackage
-export UpdatePackage = ni.UpdatePackage
-export UninstallPackage = ni.UninstallPackage
-export Install = InstallPackage
-export Update = UpdatePackage
-export Uninstall = UninstallPackage
-export UpdateFreya = ni.Update
+_G.InstallPackage = ni.InstallPackage
+_G.UpdatePackage = ni.UpdatePackage
+_G.UninstallPackage = ni.UninstallPackage
+_G.Install = ni.InstallPackage
+_G.Update = ni.UpdatePackage
+_G.Uninstall = ni.UninstallPackage
+_G.UpdateFreya = ni.Update
 
 print "[Info][Freya Studio] Freya Studio loaded. Try `Freya.Help()` for more info."
 
