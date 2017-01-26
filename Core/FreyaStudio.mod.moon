@@ -2,6 +2,8 @@
 --// * Freya Studio util module
 --//
 
+local ^
+
 ni = newproxy true
 Hybrid = (f) -> (...) ->
   return f select 2, ... if ... == ni else f ...
@@ -53,6 +55,19 @@ Controller = with {
       print "[Help][Freya Studio] Updating a package: `Update(Package)`"
       print "[Help][Freya Studio] Uninstalling a package: `Uninstall(Package)`"
       print "[Help][Freya Studio] Updating Freya: `UpdateFreya()`"
+    Inject: ->
+      nenv = {
+        Freya: Controller
+        Install: Controller.InstallPackage
+        Update: Controller.UpdatePackage
+        Uninstall: Controller.UninstallPackage
+        InstallPackage: Controller.InstallPackage
+        UpdatePackage: Controller.UpdatePackage
+        UninstallPacakge: Controller.UninstallPackge
+        UpdateFreya: Controller.Update
+      }
+      oenv = getfenv 2
+      setfenv 2, setmetatable nenv, __index: oenv
   }
   .UpdateFreya = .Update
   .LoadUtil = .Load
