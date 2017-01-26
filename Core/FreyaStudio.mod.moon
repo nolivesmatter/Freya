@@ -47,6 +47,12 @@ Controller = with {
     Uninstall: ->
       -- Uninstall Freya.
       return require(game.ServerStorage.Freya.vanish)!
+    Help: ->
+      print "[Help][Freya Studio] Freya Studio help:"
+      print "[Help][Freya Studio] Installing a package: `Install(Package)`"
+      print "[Help][Freya Studio] Updating a package: `Update(Package)`"
+      print "[Help][Freya Studio] Uninstalling a package: `Uninstall(Package)`"
+      print "[Help][Freya Studio] Updating Freya: `UpdateFreya()`"
   }
   .UpdateFreya = .Update
   .LoadUtil = .Load
@@ -56,5 +62,18 @@ with getmetatable ni
   .__index = Controller
   .__tostring = -> "FreyaStudio Controller"
   .__metatable = "Locked Metatable: Freya"
+
+-- Load me in Scotty
+export Freya = ni
+_G.Freya = ni
+export InstallPackage = ni.InstallPackage
+export UpdatePackage = ni.UpdatePackage
+export UninstallPackage = ni.UninstallPackage
+export Install = InstallPackage
+export Update = UpdatePackage
+export Uninstall = UninstallPackage
+export UpdateFreya = ni.Update
+
+print "[Info][Freya Studio] Freya Studio loaded. Try `Freya.Help()` for more info."
 
 return ni
