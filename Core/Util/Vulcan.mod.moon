@@ -195,6 +195,10 @@ Vulcan = {
             .Name = "LoadOrder"
             .Value = lo
             .Parent = pak
+          with Instance.new "BoolValue"
+            .Name = "Enabled"
+            .Value = true
+            .Parent = pak
       sav = {
         Resource: .Package
         Origin:
@@ -250,17 +254,13 @@ Vulcan = {
             return error "[Error][Freya Vulcan] Failed to install dependency #{dep.Name} #{dep.Version} because \"#{err}\"", 2 unless s
             print "[Info][Freya Vulcan] Installed dependency #{dep.Name} #{dep.Version or 'latest'}"
       if .Update then .Update opkg, Package
+      if .Package\IsA "Script" and opkg\IsA "Script"
+        if opkg\FindFirstChild "LoadOrder"
+          opkg.LoadOrder.Parent = .Package
+        if opkg\FindFirstChild "Enabled"
+          opkg.Enabled.Parent = .Package
       opkg\Destroy!
       if pkgloc then .Package.Parent = pkgloc
-      if .Package\IsA "Script"
-      -- Sort out other package metadata for Scripts
-        pak = .Package
-        if .LoadOrder
-          lo = .LoadOrder
-          with Instance.new "IntValue"
-            .Name = "LoadOrder"
-            .Value = lo
-            .Parent = pak
       sav = {
         Resource: .Package
         Origin:
