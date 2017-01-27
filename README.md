@@ -52,7 +52,7 @@ You would probably benefit from using Freya if you are:
   Some models may have Freya as a dependency, and will simply refuse to work without Freya. This may be because they were built around Freya, because they are designed as compatibility layers, or because they were designed as extensions to Freya. Whatever the reason is, you will need Freya in your game for them to work.
   
 ## Where is the documentation?
-The documentation can be found at [https://docs.crescentcode.net/Freya](), and provides examples and standards. If anything is missing, feel free to [contribute](https://github.com/CrescentCode/Enchiridion/tree/master/site/Freya) or [suggest some changes](https://github.com/CrescentCode/Enchiridion/issues)
+The documentation can be found [here](https://docs.crescentcode.net/Freya), and provides examples and standards. If anything is missing, feel free to [contribute](https://github.com/CrescentCode/Enchiridion/tree/master/site/Freya) or [suggest some changes](https://github.com/CrescentCode/Enchiridion/issues)
 
 ## What's in a name?
 
