@@ -25,6 +25,9 @@ end
 
 -- Get our Freya Main
 local Freya = require(game.ReplicatedStorage:WaitForChild("Freya"):WaitForChild("Main"));
+-- Put it in _G
+_G.Freya = Freya
+_G.FreyaClient = Freya
 
 -- ReplicatedFirst, after Freya exists.
 local rflist = {}
@@ -61,7 +64,3 @@ for i=1, #rflist do
     while not ready.Value do ready.Changed:wait() end
   end
 end
-
--- Put it in _G
-_G.Freya = Freya
-_G.FreyaClient = Freya
