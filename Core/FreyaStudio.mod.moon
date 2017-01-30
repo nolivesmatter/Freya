@@ -51,10 +51,11 @@ Controller = with {
       return require(game.ServerStorage.Freya.vanish)!
     Help: ->
       print "[Help][Freya Studio] Freya Studio help:"
-      print "[Help][Freya Studio] Installing a package: `Install(Package)`"
-      print "[Help][Freya Studio] Updating a package: `Update(Package)`"
-      print "[Help][Freya Studio] Uninstalling a package: `Uninstall(Package)`"
-      print "[Help][Freya Studio] Updating Freya: `UpdateFreya()`"
+      print "[Help][Freya Studio] Installing a package: `_G.Install(Package)`"
+      print "[Help][Freya Studio] Updating a package: `_G.Update(Package)`"
+      print "[Help][Freya Studio] Uninstalling a package: `_G.Uninstall(Package)`"
+      print "[Help][Freya Studio] Updating Freya: `_G.UpdateFreya()`"
+      print "[Help][Freya Studio] Don't want to use `_G`? Try `_G.Freya.Inject()`"
     Inject: ->
       nenv = {
         Freya: Controller
@@ -68,6 +69,7 @@ Controller = with {
       }
       oenv = getfenv 2
       setfenv 2, setmetatable nenv, __index: oenv
+      print "[Info][Freya Studio] Successfully injected Freya"
   }
   .UpdateFreya = .Update
   .LoadUtil = .Load
@@ -88,6 +90,6 @@ _G.Update = ni.UpdatePackage
 _G.Uninstall = ni.UninstallPackage
 _G.UpdateFreya = ni.Update
 
-print "[Info][Freya Studio] Freya Studio loaded. Try `Freya.Help()` for more info."
+print "[Info][Freya Studio] Freya Studio loaded. Try `_G.Freya.Help()` for more info."
 
 return ni
