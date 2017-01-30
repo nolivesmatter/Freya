@@ -7,6 +7,8 @@
 local ^
 Intent = require script.Parent.Intents
 
+AoM = {}
+
 IsServer = do
   RunService = game\GetService "RunService"
   if RunService\IsRunMode!
@@ -49,7 +51,7 @@ UserPermissions = setmetatable {}, {
     return v
 }
 GroupClass = {
-  GetPlayers: =>
+  GetUsers: =>
     @ = Groups[@]
     return error "Invalid group for GetPlayers", 2 unless @
     return [k for k,v in pairs @Users]
@@ -57,21 +59,27 @@ GroupClass = {
     this = @
     @ = Groups[@]
     return error "Invalid group for AddUser", 2 unless @
-    return error "Invalid user for AddUser", 2 unless IsInstance(user) and user\IsA "Player"
+    if IsInstance(user) and user\IsA "Player"
+      user = user.UserId
+    return error "Invalid user for AddUser", 2 unless type(user) == 'number'
     return if @Users[user]
     ug = UserGroups[user]
     ug[#ug+1] = this
     @Users[user] = true
     Intent\Fire "Permissions.AddUser", @Name, user
-  HasUser: (user) => -- Drako: HasUser? () Automatically casts returns to bool
+  HasUser: (user) =>
     @ = Groups[@]
     return error "Invalid group for HasUser", 2 unless @
+    if IsInstance(user) and user\IsA "Player"
+      user = user.UserId
     return error "You must supply a user for HasUser", 2 unless user
     return not not @Users[user]
   RemoveUser: (user) =>
     this = @
     @ = Groups[@]
     return error "Invalid group for RemoveUser", 2 unless @
+    if IsInstance(user) and user\IsA "Player"
+      user = user.UserId
     return error "You must supply a user for RemoveUser", 2 unless user
     return unless @Users[user]
     ug = UserGroups[user]
@@ -210,7 +218,9 @@ CreateGroup = (Name, Inherits) ->
 
 GetUserPermission = (User, Permission) ->
   -- Check validity first
-  return error "Invalid user for GetUserPermission", 2 unless IsInstance(User) and User\IsA "Player"
+  if IsInstance(User) and User\IsA "Player"
+    User = User.UserId
+  return error "Invalid user for GetUserPermission", 2 unless type(User) == 'number'
   Permission = GetPermission Permission
   return error "Invalid permission for GetUserPermission", 2 unless Permission
 
@@ -235,7 +245,9 @@ GetUserPermission = (User, Permission) ->
 
 AllowUserPermission = (User, Permission) ->
   -- Check validity first
-  return error "Invalid user for SetUserPermission", 2 unless IsInstance(User) and User\IsA "Player"
+  if IsInstance(User) and User\IsA "Player"
+    User = User.UserId
+  return error "Invalid user for SetUserPermission", 2 unless type(User) == 'number'
   Permission = GetPermission Permission
   return error "Invalid permission for SetUserPermission", 2 unless Permission
   UserPermissions[User][Permission] = true
@@ -243,7 +255,9 @@ AllowUserPermission = (User, Permission) ->
   
 BlockUserPermission = (User, Permission) ->
   -- Check validity first
-  return error "Invalid user for SetUserPermission", 2 unless IsInstance(User) and User\IsA "Player"
+  if IsInstance(User) and User\IsA "Player"
+    User = User.UserId
+  return error "Invalid user for SetUserPermission", 2 unless type(User) == 'number'
   Permission = GetPermission Permission
   return error "Invalid permission for SetUserPermission", 2 unless Permission
   UserPermissions[User][Permission] = false
@@ -251,7 +265,9 @@ BlockUserPermission = (User, Permission) ->
   
 RemoveUserPermission = (User, Permission) ->
   -- Check validity first
-  return error "Invalid user for RemoveUserPermission", 2 unless IsInstance(User) and User\IsA "Player"
+  if IsInstance(User) and User\IsA "Player"
+    User = User.UserId
+  return error "Invalid user for RemoveUserPermission", 2 unless type(User) == 'number'
   Permission = GetPermission Permission
   return error "Invalid permission for RemoveUserPermission", 2 unless Permission
   UserPermissions[User][Permission] = nil
@@ -272,15 +288,38 @@ Controller = {
 if IsServer
   f = => @ and nil
   Intent\Filter "Permissions.RemoveUserPermission", f
+  Intent\Subscribe "Permissions.RemoveUserPermission", (...) =>
+    AoM[#AoM+1] = {"RemoveUserPermission", ...}
   Intent\Filter "Permissions.BlockUserPermission", f
+  Intent\Subscribe "Permissions.BlockUserPermission", (...) =>
+    AoM[#AoM+1] = {"BlockUserPermission", ...}
   Intent\Filter "Permissions.AllowUserPermission", f
+  Intent\Subscribe "Permissions.AllowUserPermission", (...) =>
+    AoM[#AoM+1] = {"AllowUserPermission", ...}
   Intent\Filter "Permissions.CreatePermission", f
+  Intent\Subscribe "Permissions.CreatePermission", (...) =>
+    AoM[#AoM+1] = {"CreatePermission", ...}
   Intent\Filter "Permissions.AllowPermission", f
+  Intent\Subscribe "Permissions.AllowPermission", (...) =>
+    AoM[#AoM+1] = {"AllowPermission", ...}
   Intent\Filter "Permissions.BlockPermission", f
+  Intent\Subscribe "Permissions.BlockPermission", (...) =>
+    AoM[#AoM+1] = {"BlockPermission", ...}
   Intent\Filter "Permissions.RemovePermission", f
+  Intent\Subscribe "Permissions.RemovePermission", (...) =>
+    AoM[#AoM+1] = {"RemovePermission", ...}
   Intent\Filter "Permissions.AddUser", f
+  Intent\Subscribe "Permissions.AddUser", (...) =>
+    AoM[#AoM+1] = {"AddUser", ...}
   Intent\Filter "Permissions.RemoveUser", f
+  Intent\Subscribe "Permissions.RemoveUser", (...) =>
+    AoM[#AoM+1] = {"RemoveUser", ...}
   Intent\Filter "Permissions.CreateGroup", f
+  Intent\Subscribe "Permissions.CreateGroup", (...) =>
+    AoM[#AoM+1] = {"CreateGroup", ...}
+  Intent\Subscribe "Permissions.Sync", (p) =>
+    return if @
+    Intent\Tell "Permissions.Sync", p, AoM
 else
   Intent\Subscribe "Permissions.RemoveUserPermission", (...) =>
     return if @
@@ -312,6 +351,33 @@ else
   Intent\Subscribe "Permissions.CreateGroup", (Group, Inherits) =>
     return if @
     CreateGroup Group, [GetGroup v for v in *Inherits]
+  Intent\Subscribe "Permissions.Sync", (AoM) =>
+    return if @
+    for v in *AoM
+      switch v[1]
+        when "RemoveUserPermission"
+          RemoveUserPermission unpack v, 2
+        when "BlockUserPermission"
+          BlockUserPermission unpack v, 2
+        when "AllowUserPermission"
+          AllowUserPermission unpack v, 2
+        when "CreatePermission"
+          CreatePermission unpack v, 2
+        when "AllowPermission"
+          GetGroup(v[2])\AllowPermission v[3]
+        when "BlockPermission"
+          GetGroup(v[2])\BlockPermission v[3]
+        when "RemovePermission"
+          GetGroup(v[2])\RemovePermission v[3]
+        when "AddUser"
+          GetGroup(v[2])\AddUser v[3]
+        when "RemoveUser"
+          GetGroup(v[2])\RemoveUser v[3]
+        when "CreateGroup"
+          CreateGroup v[2], [GetGroup g for v in *v[3]]
+        else
+          warn "[Warn][Freya Permissions] Unknown sync op #{v[1]}"
+  Intent\Tell "Permissions.Sync"
 
 with getmetatable ni
   .__index = Controller
