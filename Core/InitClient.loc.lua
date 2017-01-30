@@ -64,4 +64,4 @@ end
 
 -- Put it in _G
 _G.Freya = Freya
-_G.FreyaServer = Freya
+_G.FreyaClient = Freya
